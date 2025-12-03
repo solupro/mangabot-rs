@@ -1,0 +1,33 @@
+[package]
+name = "mangabot-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Telegram Bot框架 - 使用最新throttling特性
+teloxide = { version = "0.17.0", features = ["macros", "throttle", "ctrlc_handler"] }
+
+# 异步运行时 - 最新稳定版
+tokio = { version = "1.8", features = ["full", "tracing"] }
+
+# 配置管理
+serde = { version = "1.0", features = ["derive"] }
+config = "0.14"
+
+# 错误处理 - thiserror 2.0版本
+thiserror = "2.0"
+
+# 日志与追踪 - 现代可观测性栈
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+log = "0.4.29"
+
+
+[dev-dependencies]
+# 测试框架
+tokio-test = "0.4"
+mockall = "0.13"           # 模拟对象
