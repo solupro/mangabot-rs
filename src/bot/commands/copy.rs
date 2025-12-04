@@ -2,7 +2,7 @@ use teloxide::prelude::*;
 use crate::error::Result;
 use std::format;
 
-pub async fn handle(bot: Bot, msg: Message, say: String) -> Result<()> {
+pub async fn handle(bot: &Bot, msg: &Message, say: String) -> Result<()> {
     let copy_msg = format!(
         "👋 *{}* say: {}",
         msg.from.as_ref().map(|u| u.first_name.clone()).unwrap_or_else(|| "Unknown user".to_string()),

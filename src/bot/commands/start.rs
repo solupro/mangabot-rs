@@ -3,14 +3,15 @@ use std::format;
 use teloxide::prelude::*;
 
 pub async fn handle(
-    bot: Bot,
-    msg: Message,
+    bot: &Bot,
+    msg: &Message,
 ) -> Result<()> {
 
     let welcome_msg = format!(
         "👋 你好 *{}*！\n\n欢迎使用本机器人\n\n输入",
         msg.from
-            .map(|u| u.first_name)
+            .as_ref()
+            .map(|u| u.first_name.clone())
             .unwrap_or("Unknown user".to_string())
     );
 

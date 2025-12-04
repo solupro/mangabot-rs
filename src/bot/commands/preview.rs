@@ -1,16 +1,14 @@
 use std::cmp::min;
 use crate::error::Result;
 use crate::services;
-use std::format;
-use std::sync::Arc;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, InputMedia, InputMediaPhoto};
 use crate::utils::codec::encode_command;
 
 pub async fn handle(
-    bot: Bot,
-    msg: Message,
-    config: Arc<crate::config::Config>,
+    bot: &Bot,
+    msg: &Message,
+    config: &crate::config::Config,
     aid: Option<String>,
     page: Option<i32>,
 ) -> Result<()> {

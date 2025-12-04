@@ -2,7 +2,6 @@ use crate::config::Config;
 use crate::error::Result;
 use crate::models::MangaInfo;
 use std::format;
-use std::sync::Arc;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, ParseMode};
 use crate::utils::codec::encode_command;
@@ -64,9 +63,9 @@ fn format_manga_item(m: &MangaInfo, bot_name: &str) -> String {
 }
 
 pub async fn handle(
-    bot: Bot,
-    msg: Message,
-    config: Arc<Config>,
+    bot: &Bot,
+    msg: &Message,
+    config: &Config,
     period: Option<String>,
     page: Option<i32>,
 ) -> Result<()> {

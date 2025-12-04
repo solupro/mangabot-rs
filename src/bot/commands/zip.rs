@@ -1,9 +1,8 @@
 use teloxide::prelude::*;
 use crate::error::Result;
 use std::format;
-use std::sync::Arc;
 
-pub async fn handle(bot: Bot, msg: Message, config: Arc<crate::config::Config>, aid: String) -> Result<()> {
+pub async fn handle(bot: &Bot, msg: &Message, config: &crate::config::Config, aid: String) -> Result<()> {
     let copy_msg = format!(
         "👋 *{}* say: {}",
         msg.from.as_ref().map(|u| u.first_name.clone()).unwrap_or_else(|| "Unknown user".to_string()),

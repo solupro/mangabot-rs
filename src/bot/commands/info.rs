@@ -1,7 +1,6 @@
 use teloxide::prelude::*;
 use crate::error::Result;
 use std::format;
-use std::sync::Arc;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup};
 use crate::config::Config;
 use crate::models::MangaDetail;
@@ -9,7 +8,7 @@ use crate::services;
 use crate::utils::codec::encode_command;
 use crate::utils::escape_md_v2;
 
-pub async fn handle(bot: Bot, msg: Message, config: Arc<Config>, aid: String) -> Result<()> {
+pub async fn handle(bot: &Bot, msg: &Message, config: &Config, aid: String) -> Result<()> {
 
     let info_url = build_info_url(&config.base_url, &aid);
     let manga_detail = services::manga::parse_detail(aid.parse::<i64>().unwrap(), &info_url).await?;
