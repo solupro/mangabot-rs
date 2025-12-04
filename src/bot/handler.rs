@@ -39,9 +39,18 @@ pub async fn handle_callback(
     config: Arc<crate::config::Config>,
 ) -> Result<()> {
     if let Some(data) = cq.data.clone() {
+        let mut delete_flag = false;
+        let mut clone_msg: Option<Message> = None;
         if let Ok(cmd) = utils::codec::decode_command(&data) {
             CommandMetrics::record(&cmd);
+
+            delete_flag = match cmd {
+                Command::Preview(_, _) => true,
+                _ => false,
+            };
+
             if let Some(msg) = cq.regular_message() {
+                clone_msg = Some(msg.clone());
                 handle_codec(bot.clone(), msg, cmd, config).await?;
             }
         }
@@ -49,6 +58,10 @@ pub async fn handle_callback(
             .text("⏳ 加载中...")
             .show_alert(false) // 顶部小提示（非弹窗）
             .await?;
+
+        if delete_flag && clone_msg.is_some() {
+            bot.delete_message(clone_msg.as_ref().unwrap().chat.id, clone_msg.as_ref().unwrap().id).await?;
+        }
     }
     Ok(())
 }
