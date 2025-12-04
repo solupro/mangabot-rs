@@ -17,10 +17,10 @@ pub async fn handle(bot: Bot, msg: Message, config: Arc<Config>, aid: String) ->
 
     let mut buttons = Vec::with_capacity(2);
     let preview_data = encode_command("preview", &[aid.clone()]).unwrap();
-    buttons.push(InlineKeyboardButton::callback("预览", preview_data));
+    buttons.push(InlineKeyboardButton::callback("🏞️预览", preview_data));
 
     let zip_data = encode_command("zip", &[aid]).unwrap();
-    buttons.push(InlineKeyboardButton::callback("下载️", zip_data));
+    buttons.push(InlineKeyboardButton::callback("⏬下载️", zip_data));
 
     bot.send_message(msg.chat.id, detail_msg)
         .parse_mode(teloxide::types::ParseMode::MarkdownV2)
@@ -49,7 +49,7 @@ fn build_detail_msg(m: MangaDetail) -> String {
          👤 *Author:* `{author}`\n\
          📚 *Category:* `{category}`\n\
          🏷 *Tags:* {tags}\n\
-         📄 *Pages:* `{}`\n\n\
+         📄 *Size:* `{}`\n\n\
          {desc}",
         m.total
     )

@@ -1,7 +1,7 @@
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use crate::bot::commands::Command;
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use crate::bot::commands::Command;
 // ================
 // 1. 核心数据结构
 // ================
@@ -61,9 +61,9 @@ impl fmt::Display for CommandArg {
 /// 命令载体（带版本，便于未来扩展）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct EncodedCommand {
-    v: u8,                   // 版本号
-    cmd: String,             // 命令名（如 "rank"）
-    args: Vec<CommandArg>,   // 参数列表
+    v: u8,                 // 版本号
+    cmd: String,           // 命令名（如 "rank"）
+    args: Vec<CommandArg>, // 参数列表
 }
 
 // ================
@@ -102,15 +102,15 @@ pub fn encode_command(
 
     // 4. Telegram 限制: start payload ≤ 64 字符
     if encoded.len() > 64 {
-        return Err::<String, Box<dyn std::error::Error + Send + Sync>>("Encoded command exceeds 64 characters".into());
+        return Err::<String, Box<dyn std::error::Error + Send + Sync>>(
+            "Encoded command exceeds 64 characters".into(),
+        );
     }
 
     Ok(encoded)
 }
 
-pub fn decode_command(
-    payload: &str,
-) -> Result<Command, Box<dyn std::error::Error + Send + Sync>> {
+pub fn decode_command(payload: &str) -> Result<Command, Box<dyn std::error::Error + Send + Sync>> {
     // 1. Base64 解码
     let bytes = URL_SAFE_NO_PAD.decode(payload)?;
     let plain = String::from_utf8(bytes)?;
@@ -153,6 +153,28 @@ pub fn decode_command(
                 String::new()
             };
             Command::Info(aid)
+        }
+        "preview" => {
+            let aid = if args.len() > 0 {
+                args.get_i64(0)
+            } else {
+                Some(0)
+            };
+            let page = if args.len() > 1 {
+                args.get_i32(1)
+            } else {
+                Some(1)
+            };
+
+            Command::Preview(aid.map(|s| s.to_string()), page)
+        },
+        "zip" => {
+            let aid = if parts.len() > 1 {
+                parts[1].to_string()
+            } else {
+                String::new()
+            };
+            Command::Zip(aid)
         }
         _ => Command::Start(None),
     };
@@ -206,9 +228,7 @@ impl CommandArgsExt for Vec<CommandArg> {
     fn get_i32(&self, index: usize) -> Option<i32> {
         self.get(index).and_then(|arg| match arg {
             CommandArg::I32(v) => Some(*v),
-            CommandArg::I64(v) if *v >= i32::MIN as i64 && *v <= i32::MAX as i64 => {
-                Some(*v as i32)
-            }
+            CommandArg::I64(v) if *v >= i32::MIN as i64 && *v <= i32::MAX as i64 => Some(*v as i32),
             _ => None,
         })
     }

@@ -11,6 +11,7 @@ pub struct Config {
     pub log_path: String,
     pub http_timeout: u64,
     pub download_timeout: u64,
+    pub preview_size: u32,
 }
 
 impl Config {
@@ -25,6 +26,7 @@ impl Config {
             .set_default("log_path", "/tmp/mangabot.log")?
             .set_default("http_timeout", 10)?
             .set_default("download_timeout", 15)?
+            .set_default("preview_size", 10)?
             .build()?
             .try_deserialize()
     }

@@ -1,7 +1,7 @@
 use teloxide::utils::command::BotCommands;
 use teloxide::utils::command::ParseError;
 
-fn parse_rank_command(s: String) -> Result<(Option<String>, Option<i32>), ParseError> {
+fn parse_string_i32(s: String) -> Result<(Option<String>, Option<i32>), ParseError> {
     let mut args = s.split_whitespace();
 
     let period = args.next().map(|s| s.to_string());
@@ -14,6 +14,24 @@ fn parse_rank_command(s: String) -> Result<(Option<String>, Option<i32>), ParseE
 
     Ok((final_period, final_page))
 }
+
+fn parse_start_payload(s: String) -> Result<(Option<String>,), ParseError> {
+    let s = s.trim();
+    if s.is_empty() {
+        Ok((None,))
+    } else {
+        Ok((Some(s.to_string()),))
+    }
+}
+
+fn build_images_url(base_url: &str, aid: &str) -> String {
+    format!(
+        "{}/photos-webp-aid-{}.html",
+        base_url.trim_end_matches('/'), // 防止双斜杠
+        aid
+    )
+}
+
 
 #[derive(BotCommands, Clone, Debug)]
 #[command(rename_rule = "lowercase", description = "可用命令:")]
@@ -28,25 +46,23 @@ pub enum Command {
         description = "排行榜：/rank [period] [page]\n\
                    period: day（默认）, week, month\n\
                    page: 页码（默认 1）",
-        parse_with = parse_rank_command
+        parse_with = parse_string_i32
     )]
     Rank(Option<String>, Option<i32>),
 
     #[command(description = "查询漫画信息: /info <漫画id>")]
     Info(String),
+
+    #[command(description = "预览漫画: /preview <漫画id> <页码>", parse_with = parse_string_i32)]
+    Preview(Option<String>, Option<i32>),
+
+    #[command(description = "下载漫画: /zip <漫画id>")]
+    Zip(String),
 }
 
 pub mod copy;
 pub mod start;
-
 pub mod rank;
-
 pub mod info;
-fn parse_start_payload(s: String) -> Result<(Option<String>,), ParseError> {
-    let s = s.trim();
-    if s.is_empty() {
-        Ok((None,))
-    } else {
-        Ok((Some(s.to_string()),))
-    }
-}
+pub mod preview;
+pub mod zip;

@@ -6,3 +6,4 @@ log_level = "info"
 log_path = "/tmp/mangabot.log"
 http_timeout = 10
 download_timeout = 15
+preview_size = 10

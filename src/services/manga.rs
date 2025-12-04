@@ -1,3 +1,5 @@
+use once_cell::sync::Lazy;
+use regex::Regex;
 use crate::error::BotError;
 use crate::models::{MangaDetail, MangaInfo};
 use crate::utils;
@@ -179,4 +181,18 @@ pub async fn parse_detail(id: i64, url: &str) -> Result<MangaDetail, BotError> {
         tags,
         description,
     })
+}
+
+static IMAGE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"url:\s*fast_img_host\s*\+\s*\\"([^\\"]+)\\""#).unwrap());
+pub async fn extract_image_urls(url: &str, base_url: &str) -> Result<Vec<String>, BotError> {
+    let content = utils::http::fetch(url).await?;
+
+    let mut images: Vec<String> = Vec::new();
+    for cap in IMAGE_RE.captures_iter(&content) {
+        if let Some(img) = cap.get(1) {
+            images.push(utils::http::resolve_url(img.as_str(), base_url));
+        }
+    }
+
+    Ok(images)
 }
