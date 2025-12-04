@@ -6,6 +6,7 @@ use std::sync::Arc;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, ParseMode};
 use crate::utils::codec::encode_command;
+use crate::utils::escape_md_v2;
 
 #[derive(Debug, Clone, Copy)]
 enum RankType {
@@ -42,20 +43,6 @@ fn build_ranking_url(base_url: &str, rank_type: RankType, page: i32) -> String {
     )
 }
 
-fn escape_md_v2(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    for ch in s.chars() {
-        match ch {
-            '_' | '*' | '[' | ']' | '(' | ')' | '~' | '`' | '>' | '#' | '+' | '-' | '=' | '|'
-            | '{' | '}' | '.' | '!' => {
-                out.push('\\');
-                out.push(ch);
-            }
-            _ => out.push(ch),
-        }
-    }
-    out
-}
 
 fn format_manga_item(m: &MangaInfo, bot_name: &str) -> String {
     let title = escape_md_v2(&m.title);

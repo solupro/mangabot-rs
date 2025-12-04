@@ -1,10 +1,6 @@
 use crate::error::Result;
 use std::format;
-use std::sync::Arc;
 use teloxide::prelude::*;
-use crate::bot::handler::handle_command;
-use crate::config::Config;
-use crate::utils;
 
 pub async fn handle(
     bot: Bot,

@@ -1,17 +1,8 @@
 use crate::error::BotError;
-use crate::models::MangaInfo;
+use crate::models::{MangaDetail, MangaInfo};
 use crate::utils;
 use scraper::selectable::Selectable;
 use scraper::{Html, Selector};
-use crate::utils::extract_num;
-
-fn digits_to_i32(s: &str) -> i32 {
-    s.chars()
-        .filter(|c| c.is_ascii_digit())
-        .collect::<String>()
-        .parse::<i32>()
-        .unwrap_or(0)
-}
 
 pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
     let scheme = if url.starts_with("https") {
@@ -78,9 +69,9 @@ pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
                         .map(|s| s.text().collect::<String>())
                     {
                         if t.contains("共") {
-                            total = digits_to_i32(&t.trim());
+                            total = utils::digits_to_i32(&t.trim());
                         } else {
-                            fav = digits_to_i32(&t.trim());
+                            fav = utils::digits_to_i32(&t.trim());
                         }
                     }
 
@@ -108,4 +99,84 @@ pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
         }
     }
     Ok(mangas)
+}
+
+pub async fn parse_detail(id: i64, url: &str) -> Result<MangaDetail, BotError> {
+    let scheme = if url.starts_with("https") {
+        "https:"
+    } else {
+        "http:"
+    };
+
+    let content = utils::http::fetch(url).await?;
+
+    let html = Html::parse_document(&content);
+
+    let intro_sel = Selector::parse(".Introduct_Sub").unwrap();
+    let cover_sel = Selector::parse("img").unwrap();
+    let author_sel = Selector::parse("a.introName").unwrap();
+    let category_sel = Selector::parse("div.sub_r > p:nth-child(2) > a").unwrap();
+    let total_sel = Selector::parse("span.date").unwrap();
+
+    let desc_sel = Selector::parse(".txtDesc").unwrap();
+
+    let (cover, title, author, category, total) = if let Some(intro_elem) = html.select(&intro_sel).next() {
+        let (mut cover, title) = if let Some(cover_elem) = intro_elem.select(&cover_sel).next() {
+            (cover_elem.attr("src").unwrap_or("").to_string(),
+            cover_elem.attr("title").unwrap_or("").to_string())
+        } else {
+            (String::new(), String::new())
+        };
+        if !cover.starts_with("http") && !cover.is_empty() {
+            if cover.starts_with("////") {
+                cover = cover.strip_prefix("//").unwrap_or(&cover).to_string();
+            }
+            cover = format!("{}{}", scheme, cover);
+        }
+
+        let author = if let Some(author_elem) = intro_elem.select(&author_sel).next() {
+            author_elem.text().collect::<String>().trim().to_string()
+        } else {
+            String::new()
+        };
+
+        let category = if let Some(category_elem) = intro_elem.select(&category_sel).next() {
+            category_elem.text().collect::<String>().trim().to_string()
+        } else {
+            String::new()
+        };
+        let total = if let Some(total_elem) = intro_elem.select(&total_sel).next() {
+            utils::digits_to_i32(total_elem.text().collect::<String>().trim())
+        } else {
+            0
+        };
+
+        (cover, title, author, category, total)
+    } else {
+        (String::new(), String::new(), String::new(), String::new(), 0)
+    };
+
+    let desc_elem = html.select(&desc_sel).next().unwrap();
+    let tag_sel = Selector::parse("a.tagshow").unwrap();
+
+    let mut tags: Vec<String> = Vec::new();
+    for tag in desc_elem.select(&tag_sel) {
+        tags.push(tag.text().collect::<String>().trim().to_string());
+    }
+
+    let description = utils::dom::text_without_any(&desc_elem, &[tag_sel])
+        .join("\n")
+        .trim()
+        .to_string();
+
+    Ok(MangaDetail {
+        id,
+        title,
+        cover,
+        author,
+        total,
+        category,
+        tags,
+        description,
+    })
 }

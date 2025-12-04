@@ -9,3 +9,15 @@ pub struct MangaInfo {
     pub fav: i32,
     pub published: String,
 }
+
+#[derive(Debug, Clone)]
+pub struct MangaDetail {
+    pub id: i64,
+    pub title: String,
+    pub cover: String,
+    pub author: String,
+    pub total: i32,
+    pub category: String,
+    pub tags: Vec<String>,
+    pub description: String,
+}
