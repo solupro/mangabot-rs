@@ -6,6 +6,9 @@ edition = "2024"
 [dependencies]
 # Telegram Bot框架 - 使用最新throttling特性
 teloxide = { version = "0.17.0", features = ["macros", "throttle", "ctrlc_handler"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "blocking", "cookies"] }
+scraper = "0.24.0"
+regex = "1.10"
 
 # 异步运行时 - 最新稳定版
 tokio = { version = "1.8", features = ["full", "tracing"] }
@@ -24,8 +27,8 @@ tracing-appender = "0.2"
 
 # 时间处理
 chrono = { version = "0.4", features = ["serde"] }
-log = "0.4.29"
-
+once_cell = "1.21.3"
+base64 = "0.21.7"
 
 [dev-dependencies]
 # 测试框架

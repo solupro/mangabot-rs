@@ -1,5 +1,8 @@
+bot_name = ""
 telegram_token = ""
 base_url = ""
 admin_ids = []
 log_level = "info"
 log_path = "/tmp/mangabot.log"
+http_timeout = 10
+download_timeout = 15

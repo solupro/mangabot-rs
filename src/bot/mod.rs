@@ -11,9 +11,21 @@ pub mod commands;
 
 pub async fn run(bot: Bot, config: crate::config::Config) -> crate::error::Result<()> {
     let config = Arc::new(config);
-    let handler = Update::filter_message()
-        .filter_command::<Command>()
-        .endpoint(handler::handle_command);
+    let handler = dptree::entry()
+        .branch(
+            Update::filter_message()
+                .filter_command::<Command>()
+                .endpoint(|bot: Bot, msg: teloxide::types::Message, cmd: Command, config: Arc<crate::config::Config>| async move {
+                    handler::handle_command(bot, msg, cmd, config).await
+                })
+        )
+        .branch(
+            Update::filter_callback_query()
+                .endpoint(|bot: Bot, cq: teloxide::types::CallbackQuery, config: Arc<crate::config::Config>| async move {
+                    handler::handle_callback(bot, cq, config).await
+                })
+        );
+
 
     Dispatcher::builder(bot, handler)
         .dependencies(dptree::deps![config])

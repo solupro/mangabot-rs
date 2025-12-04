@@ -21,6 +21,12 @@ pub enum BotError {
 
     #[error("解析错误: {0}")]
     ParseError(String),
+
+    #[error("请求错误: {0}")]
+    RequestError(#[from] reqwest::Error),
+
+    #[error("请求错误: {0}")]
+    RequestStatusError(String),
 }
 
 // 2024: 更优雅的Result别名

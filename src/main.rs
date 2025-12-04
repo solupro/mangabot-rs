@@ -8,12 +8,14 @@ mod telemetry;
 mod bot;
 mod models;
 mod services;
+mod utils;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = Config::load().expect("配置加载失败");
     telemetry::init_telemetry(&config)?;
+    utils::client::init(&config)?;
     info!("Bot配置加载完成");
 
     let bot = Bot::new(&config.telegram_token);
