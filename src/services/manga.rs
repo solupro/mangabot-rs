@@ -5,6 +5,7 @@ use crate::models::{MangaDetail, MangaInfo};
 use crate::utils;
 use scraper::selectable::Selectable;
 use scraper::{Html, Selector};
+use tracing::info;
 
 pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
     let scheme = get_scheme(url.to_string());
@@ -227,7 +228,12 @@ pub async fn parse_cate(url: &str) -> Result<Vec<MangaInfo>, BotError> {
 }
 
 static IMAGE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"url:\s*fast_img_host\s*\+\s*\\"([^\\"]+)\\""#).unwrap());
-pub async fn extract_image_urls(url: &str, base_url: &str) -> Result<Vec<String>, BotError> {
+pub async fn extract_image_urls(aid: &str, url: &str, base_url: &str) -> Result<Vec<String>, BotError> {
+    if let Some(images) = utils::cache::image_cache().get(aid).await {
+        info!("aid:{} Image cache hit", aid);
+        return Ok(images);
+    }
+
     let content = utils::http::fetch(url).await?;
 
     let mut images: Vec<String> = Vec::new();
@@ -237,6 +243,11 @@ pub async fn extract_image_urls(url: &str, base_url: &str) -> Result<Vec<String>
         }
     }
 
+    if !images.is_empty() {
+        utils::cache::image_cache().insert(aid.to_string(), images.clone()).await;
+        info!("aid:{} Image cache miss, insert {} images", aid, images.len());
+    }
+    
     Ok(images)
 }
 

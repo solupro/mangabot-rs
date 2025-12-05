@@ -12,7 +12,11 @@ log_level = "info"
 log_path = "/tmp/mangabot/app.log"
 download_path = "/tmp/mangabot/downloads"
 download_concurrency = 5
+cache_download_token_minute_ttl = 10
+cache_download_token_max_size = 256
 
 [manga]
 base_url = ""
 preview_size = 10
+cache_image_minute_ttl = 20
+cache_image_max_size = 256

@@ -5,6 +5,7 @@ pub mod client;
 pub mod http;
 pub mod codec;
 pub mod dom;
+pub mod cache;
 
 static NUM_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"-(\d+)").unwrap());
 

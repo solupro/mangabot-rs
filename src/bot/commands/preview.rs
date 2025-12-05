@@ -15,7 +15,7 @@ pub async fn handle(
     let paid = aid.unwrap_or_default();
 
     let images_url = crate::bot::commands::build_images_url(&config.manga.base_url, paid.as_str());
-    let images = services::manga::extract_image_urls(&images_url, &config.manga.base_url).await?;
+    let images = services::manga::extract_image_urls(paid.as_str(), &images_url, &config.manga.base_url).await?;
 
     let limit = usize::try_from(config.manga.preview_size).unwrap_or(5);
     let offset = (page.map(|p| p as usize).unwrap_or(1) - 1) * limit;
