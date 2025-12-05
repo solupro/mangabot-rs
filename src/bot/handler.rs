@@ -22,13 +22,19 @@ async fn dispatch_command(
         _ => false,
     };
 
-    match cmd {
-        Command::Start(payload) => start::handle(&bot, &msg).await?,
-        Command::Copy(say) => copy::handle(&bot, &msg, say).await?,
-        Command::Rank(period, page) => rank::handle(&bot, &msg, &config, period, page).await?,
-        Command::Info(aid) => info::handle(&bot, &msg, &config, aid).await?,
-        Command::Preview(aid, page) => preview::handle(&bot, &msg, &config, aid, page).await?,
-        Command::Zip(aid) => zip::handle(&bot, &msg, &config, aid).await?,
+    let result = match cmd {
+        Command::Start(payload) => start::handle(&bot, &msg).await,
+        Command::Copy(say) => copy::handle(&bot, &msg, say).await,
+        Command::Rank(period, page) => rank::handle(&bot, &msg, &config, period, page).await,
+        Command::Info(aid) => info::handle(&bot, &msg, &config, aid).await,
+        Command::Preview(aid, page) => preview::handle(&bot, &msg, &config, aid, page).await,
+        Command::Zip(aid) => zip::handle(&bot, &msg, &config, aid).await,
+    };
+
+    if let Err(ref e) = result {
+        bot.send_message(msg.chat.id, format!("❌ 发生错误: {}", e))
+            .await
+            .ok();
     }
 
     Ok(should_delete)
@@ -68,9 +74,9 @@ pub async fn handle_command(
 ) -> Result<()> {
 
     if !config.is_admin(msg.from.as_ref().unwrap().id.0) {
-        bot.send_message(msg.chat.id, "❌没权限操作")
-            .parse_mode(teloxide::types::ParseMode::MarkdownV2)
-            .await?;
+        warn!("user_id {} can not access command", msg.from.as_ref().unwrap().id.0);
+        bot.send_message(msg.chat.id, "❌没权限操作").await?;
+
         return Ok(());
     }
 
@@ -87,10 +93,12 @@ pub async fn handle_callback(
     let Some(data) = cq.data.as_deref() else { return Ok(()); };
 
     if !config.is_admin(cq.from.id.0) {
+        warn!("user_id {} can not access callback", cq.from.id.0);
         bot.answer_callback_query(cq.id.clone())
             .text("❌没权限操作")
             .show_alert(true)
             .await?;
+
         return Ok(());
     }
 
