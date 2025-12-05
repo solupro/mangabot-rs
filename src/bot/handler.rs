@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::bot::commands::{Command, copy, info, preview, rank, start, zip};
 use crate::utils;
 use crate::{error::Result, telemetry::CommandMetrics};
@@ -10,7 +11,7 @@ async fn dispatch_command(
     bot: Bot,
     msg: Message,
     cmd: Command,
-    config: crate::config::Config,
+    config: &Arc<crate::config::Config>,
 ) -> Result<bool> {
 
     let cmd = resolve_command(cmd);
@@ -63,9 +64,17 @@ pub async fn handle_command(
     bot: Bot,
     msg: Message,
     cmd: Command,
-    config: crate::config::Config,
+    config: Arc<crate::config::Config>,
 ) -> Result<()> {
-    dispatch_command(bot, msg, cmd, config).await?;
+
+    if !config.is_admin(msg.from.as_ref().unwrap().id.0) {
+        bot.send_message(msg.chat.id, "❌没权限操作")
+            .parse_mode(teloxide::types::ParseMode::MarkdownV2)
+            .await?;
+        return Ok(());
+    }
+
+    dispatch_command(bot, msg, cmd, &config).await?;
     Ok(())
 }
 
@@ -73,9 +82,17 @@ pub async fn handle_command(
 pub async fn handle_callback(
     bot: Bot,
     cq: CallbackQuery,
-    config: crate::config::Config,
+    config: Arc<crate::config::Config>,
 ) -> Result<()> {
     let Some(data) = cq.data.as_deref() else { return Ok(()); };
+
+    if !config.is_admin(cq.from.id.0) {
+        bot.answer_callback_query(cq.id.clone())
+            .text("❌没权限操作")
+            .show_alert(true)
+            .await?;
+        return Ok(());
+    }
 
     let cmd = match utils::codec::decode_command(data) {
         Ok(cmd) => cmd,
@@ -95,7 +112,7 @@ pub async fn handle_callback(
         .await?;
 
     if let Some(msg) = cq.regular_message() {
-        if dispatch_command(bot.clone(), msg.clone(), cmd, config).await? {
+        if dispatch_command(bot.clone(), msg.clone(), cmd, &config).await? {
             bot.delete_message(msg.chat.id, msg.id).await?;
         }
     }

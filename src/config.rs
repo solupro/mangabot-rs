@@ -1,12 +1,12 @@
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Config {
     pub bot_name: String,
     pub telegram_token: String,
     pub base_url: String,
-    pub admin_ids: Vec<i64>,
+    pub admin_ids: Vec<u64>,
     pub log_level: String,
     pub log_path: String,
     pub http_timeout: u64,
@@ -31,7 +31,7 @@ impl Config {
             .try_deserialize()
     }
 
-    pub fn is_admin(&mut self, user_id: i64) -> bool {
+    pub fn is_admin(&self, user_id: u64) -> bool {
         self.admin_ids.contains(&user_id)
     }
 }
@@ -48,6 +48,6 @@ fn test_config() {
 
 #[test]
 fn test_is_admin() {
-    let mut config = Config::load().unwrap();
+    let config = Config::load().unwrap();
     assert!(!config.is_admin(123456789));
 }
