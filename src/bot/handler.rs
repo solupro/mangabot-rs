@@ -1,12 +1,11 @@
 use std::sync::Arc;
 use crate::bot::commands::{Command, copy, info, preview, rank, start, zip};
 use crate::utils;
-use crate::{error::Result, telemetry::CommandMetrics};
+use crate::{error::Result};
 use teloxide::prelude::*;
-use tracing::{warn, debug, instrument};
+use tracing::{warn, debug, info};
 
 /// 统一的命令分发核心，返回是否需要删除原消息
-#[instrument(skip(bot, config))]
 async fn dispatch_command(
     bot: Bot,
     msg: Message,
@@ -14,9 +13,10 @@ async fn dispatch_command(
     config: &Arc<crate::config::Config>,
 ) -> Result<bool> {
 
+    info!("dispatch_command: {:?}, msg: {:?}", cmd, msg);
+
     let cmd = resolve_command(cmd);
 
-    CommandMetrics::record(&cmd);
     let should_delete = match cmd {
         Command::Preview(_, Some(page)) => page > 1,
         _ => false,
@@ -65,7 +65,6 @@ fn resolve_command(mut cmd: Command) -> Command {
     cmd
 }
 
-#[instrument(skip_all)]
 pub async fn handle_command(
     bot: Bot,
     msg: Message,
@@ -84,7 +83,6 @@ pub async fn handle_command(
     Ok(())
 }
 
-#[instrument(skip_all)]
 pub async fn handle_callback(
     bot: Bot,
     cq: CallbackQuery,

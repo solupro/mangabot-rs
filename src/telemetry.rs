@@ -31,8 +31,7 @@ pub fn init_telemetry(config: &crate::config::Config) -> Result<(), Box<dyn std:
         .json()
         .with_writer(stdout.and(non_blocking_appender))
         .with_timer(fmt::time::SystemTime)
-        .with_thread_names(true)
-        .with_span_events(fmt::format::FmtSpan::FULL);
+        .with_thread_names(true);
 
     let filter = EnvFilter::new(config.log_level.clone());
 
@@ -43,13 +42,4 @@ pub fn init_telemetry(config: &crate::config::Config) -> Result<(), Box<dyn std:
 
     info!("Telemetry initialized");
     Ok(())
-}
-
-// 命令指标追踪
-pub struct CommandMetrics;
-
-impl CommandMetrics {
-    pub fn record(cmd: &crate::bot::commands::Command) {
-        info!(command = ?cmd, "command_executed");
-    }
 }
