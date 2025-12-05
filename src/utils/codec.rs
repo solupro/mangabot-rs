@@ -175,7 +175,25 @@ pub fn decode_command(payload: &str) -> Result<Command, Box<dyn std::error::Erro
                 String::new()
             };
             Command::Zip(aid)
-        }
+        },
+        "cate" => {
+            let cate = if parts.len() > 1 {
+                Some(parts[1].to_string())
+            } else {
+                None
+            };
+            let sub = if parts.len() > 2 {
+                Some(parts[2].to_string())
+            } else {
+                None
+            };
+            let page = if parts.len() > 3 {
+                parts[3].parse::<i32>().ok()
+            } else {
+                Some(1)
+            };
+            Command::Cate(cate, sub, page)
+        },
         _ => Command::Start(None),
     };
 

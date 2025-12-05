@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use crate::bot::commands::{Command, copy, info, preview, rank, start, zip};
+use crate::bot::commands::{Command, copy, info, preview, rank, start, zip, cate};
 use crate::utils;
 use crate::{error::Result};
 use teloxide::prelude::*;
@@ -29,6 +29,7 @@ async fn dispatch_command(
         Command::Info(aid) => info::handle(&bot, &msg, &config, aid).await,
         Command::Preview(aid, page) => preview::handle(&bot, &msg, &config, aid, page).await,
         Command::Zip(aid) => zip::handle(&bot, &msg, &config, aid).await,
+        Command::Cate(cate, sub, page) => cate::handle(&bot, &msg, &config, cate, sub, page).await,
     };
 
     if let Err(ref e) = result {

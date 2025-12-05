@@ -15,6 +15,16 @@ fn parse_string_i32(s: String) -> Result<(Option<String>, Option<i32>), ParseErr
     Ok((final_period, final_page))
 }
 
+fn parse_string_string_i32(s: String) -> Result<(Option<String>, Option<String>, Option<i32>), ParseError> {
+    let mut args = s.split_whitespace();
+
+    let cate = args.next().map(|s| s.to_string());
+    let sub = args.next().map(|s| s.to_string());
+    let page: Option<i32> = args.next().and_then(|s| s.parse().ok());
+
+    Ok((cate, sub, page))
+}
+
 fn parse_start_payload(s: String) -> Result<(Option<String>,), ParseError> {
     let s = s.trim();
     if s.is_empty() {
@@ -50,6 +60,13 @@ pub enum Command {
     )]
     Rank(Option<String>, Option<i32>),
 
+    #[command(description = "分类查询：/cate [category] [subcategory] [page]\n\
+                   category: 漫画分类（默认 同人志）\n\
+                   subcategory: 子分类（默认 汉化）\n\
+                   page: 页码（默认 1）",
+              parse_with = parse_string_string_i32)]
+    Cate(Option<String>, Option<String>, Option<i32>),
+
     #[command(description = "查询漫画信息: /info <漫画id>")]
     Info(String),
 
@@ -66,3 +83,4 @@ pub mod rank;
 pub mod info;
 pub mod preview;
 pub mod zip;
+pub mod cate;
