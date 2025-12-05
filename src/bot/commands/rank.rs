@@ -73,7 +73,7 @@ pub async fn handle(
     let page = page.unwrap_or(1).clamp(1, 1000);
 
     let rank_type = RankType::from_str(period.as_str()).unwrap_or(RankType::Day);
-    let url = build_ranking_url(&config.base_url, rank_type, page);
+    let url = build_ranking_url(&config.manga.base_url, rank_type, page);
 
     let mangas = crate::services::manga::parse_rank(&url).await?;
 
@@ -84,7 +84,7 @@ pub async fn handle(
         page
     ));
     for m in mangas.iter().take(20) {
-        lines.push(format_manga_item(m, &config.bot_name));
+        lines.push(format_manga_item(m, &config.bot.bot_name));
     }
     let text = lines.join("\n");
 

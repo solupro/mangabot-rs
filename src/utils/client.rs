@@ -18,7 +18,7 @@ pub fn init(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     let headers = {
         let mut headers = HeaderMap::with_capacity(2); // 预分配容量
         headers.insert(USER_AGENT, HeaderValue::from_static(HTTP_USER_AGENT));
-        headers.insert(REFERER, HeaderValue::from_str(&config.base_url)
+        headers.insert(REFERER, HeaderValue::from_str(&config.manga.base_url)
             .expect("config.base_url contains invalid characters for HTTP header"));
         headers
     };
@@ -32,8 +32,8 @@ pub fn init(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
             .unwrap_or_else(|e| panic!("Failed to build {} client: {}", name, e))
     };
 
-    let http_client = build_client(config.http_timeout, "HTTP");
-    let download_client = build_client(config.download_timeout, "DOWNLOAD");
+    let http_client = build_client(config.server.http_timeout, "HTTP");
+    let download_client = build_client(config.server.download_timeout, "DOWNLOAD");
 
     HTTP_CLIENT.set(http_client).expect("HTTP_CLIENT already set (this should be unreachable)");
     DOWNLOAD_CLIENT.set(download_client).expect("DOWNLOAD_CLIENT already set (this should be unreachable)");

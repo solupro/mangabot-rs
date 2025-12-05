@@ -10,7 +10,7 @@ use crate::utils::escape_md_v2;
 
 pub async fn handle(bot: &Bot, msg: &Message, config: &Config, aid: String) -> Result<()> {
 
-    let info_url = build_info_url(&config.base_url, &aid);
+    let info_url = build_info_url(&config.manga.base_url, &aid);
     let manga_detail = services::manga::parse_detail(aid.parse::<i64>().unwrap(), &info_url).await?;
     let detail_msg = build_detail_msg(manga_detail);
 

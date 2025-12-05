@@ -1,9 +1,18 @@
-bot_name = ""
+[bot]
+bot_name = "mangars_bot"
 telegram_token = ""
-base_url = ""
-admin_ids = []
-log_level = "info"
-log_path = "/tmp/mangabot.log"
+admin_ids = [123]
+
+[server]
+port = 8087
+web_host = "http://localhost:8087"
 http_timeout = 10
 download_timeout = 15
+log_level = "info"
+log_path = "/tmp/mangabot/app.log"
+download_path = "/tmp/mangabot/downloads"
+download_concurrency = 5
+
+[manga]
+base_url = ""
 preview_size = 10

@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     utils::client::init(&config)?;
     info!("Bot配置加载完成");
 
-    let bot = Bot::new(&config.telegram_token);
+    let bot = Bot::new(&config.bot.telegram_token);
 
     info!("🚀 Bot启动中...");
     bot::run(bot, config).await?;

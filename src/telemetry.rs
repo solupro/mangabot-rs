@@ -19,7 +19,7 @@ fn split_path(path: &str) -> (PathBuf, String) {
 }
 
 pub fn init_telemetry(config: &crate::config::Config) -> Result<(), Box<dyn std::error::Error>> {
-    let (dir, file) = split_path(&config.log_path);
+    let (dir, file) = split_path(&config.server.log_path);
     fs::create_dir_all(&dir)?;
 
     let appender = rolling::daily(&dir, &file);
@@ -33,7 +33,7 @@ pub fn init_telemetry(config: &crate::config::Config) -> Result<(), Box<dyn std:
         .with_timer(fmt::time::SystemTime)
         .with_thread_names(true);
 
-    let filter = EnvFilter::new(config.log_level.clone());
+    let filter = EnvFilter::new(config.server.log_level.clone());
 
     tracing_subscriber::registry()
         .with(filter)
