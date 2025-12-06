@@ -49,35 +49,35 @@ pub enum Command {
     #[command(description = "开始对话", parse_with = parse_start_payload)]
     Start(Option<String>),
 
-    #[command(description = "复制消息")]
-    Copy(String),
+    #[command(description = "搜索 /search <key> <type> <page>", parse_with = parse_string_string_i32)]
+    Search(Option<String>, Option<String>, Option<i32>),
 
     #[command(
-        description = "排行榜：/rank [period] [page]\n\
+        description = "排行榜：/rank <period> <page>\n\
                    period: day（默认）, week, month\n\
                    page: 页码（默认 1）",
         parse_with = parse_string_i32
     )]
     Rank(Option<String>, Option<i32>),
 
-    #[command(description = "分类查询：/cate [category] [subcategory] [page]\n\
+    #[command(description = "分类查询：/cate <category> <subcategory> <page>\n\
                    category: 漫画分类（默认 同人志）\n\
                    subcategory: 子分类（默认 汉化）\n\
                    page: 页码（默认 1）",
               parse_with = parse_string_string_i32)]
     Cate(Option<String>, Option<String>, Option<i32>),
 
-    #[command(description = "查询漫画信息: /info <漫画id>")]
+    #[command(description = "查询漫画信息: /info <aid>")]
     Info(String),
 
-    #[command(description = "预览漫画: /preview <漫画id> <页码>", parse_with = parse_string_i32)]
+    #[command(description = "预览漫画: /preview <aid> <page>", parse_with = parse_string_i32)]
     Preview(Option<String>, Option<i32>),
 
-    #[command(description = "下载漫画: /zip <漫画id>")]
+    #[command(description = "下载漫画: /zip <aid>")]
     Zip(String),
 }
 
-pub mod copy;
+pub mod search;
 pub mod start;
 pub mod rank;
 pub mod info;

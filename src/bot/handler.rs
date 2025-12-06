@@ -1,9 +1,9 @@
 use std::sync::Arc;
-use crate::bot::commands::{Command, copy, info, preview, rank, start, zip, cate};
+use crate::bot::commands::{Command, search, info, preview, rank, start, zip, cate};
 use crate::utils;
 use crate::{error::Result};
 use teloxide::prelude::*;
-use tracing::{warn, debug, info};
+use tracing::{warn, debug, info, error};
 
 /// 统一的命令分发核心，返回是否需要删除原消息
 async fn dispatch_command(
@@ -15,7 +15,7 @@ async fn dispatch_command(
 
     info!("dispatch_command: {:?}, msg: {:?}", cmd, msg);
 
-    let cmd = resolve_command(cmd);
+    let cmd = resolve_command(cmd).await;
 
     let should_delete = match cmd {
         Command::Preview(_, Some(page)) => page > 1,
@@ -24,7 +24,7 @@ async fn dispatch_command(
 
     let result = match cmd {
         Command::Start(payload) => start::handle(&bot, &msg).await,
-        Command::Copy(say) => copy::handle(&bot, &msg, say).await,
+        Command::Search(key, typ, page) => search::handle(&bot, &msg, &config, key, typ, page).await,
         Command::Rank(period, page) => rank::handle(&bot, &msg, &config, period, page).await,
         Command::Info(aid) => info::handle(&bot, &msg, &config, aid).await,
         Command::Preview(aid, page) => preview::handle(&bot, &msg, &config, aid, page).await,
@@ -33,6 +33,7 @@ async fn dispatch_command(
     };
 
     if let Err(ref e) = result {
+        error!("error: {:?}", e);
         bot.send_message(msg.chat.id, format!("❌ 发生错误: {}", e))
             .await
             .ok();
@@ -42,7 +43,7 @@ async fn dispatch_command(
 }
 
 static MAX_DEPTH: usize = 5;
-fn resolve_command(mut cmd: Command) -> Command {
+async fn resolve_command(mut cmd: Command) -> Command {
     let mut depth = 0;
 
     while let Command::Start(Some(ref payload)) = cmd {
@@ -51,7 +52,7 @@ fn resolve_command(mut cmd: Command) -> Command {
             break;
         }
 
-        match utils::codec::decode_command(payload) {
+        match utils::codec::decode_command(payload).await {
             Ok(decoded) => {
                 cmd = decoded;
                 depth += 1;
@@ -101,7 +102,7 @@ pub async fn handle_callback(
         return Ok(());
     }
 
-    let cmd = match utils::codec::decode_command(data) {
+    let cmd = match utils::codec::decode_command(data).await {
         Ok(cmd) => cmd,
         Err(e) => {
             debug!(error = %e, "Failed to decode callback command");

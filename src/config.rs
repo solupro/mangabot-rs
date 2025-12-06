@@ -26,6 +26,8 @@ pub struct ServerConfig {
     pub download_concurrency: usize,
     pub cache_download_token_minute_ttl: u64,
     pub cache_download_token_max_size: u64,
+    pub cache_search_key_num_minute_ttl: u64,
+    pub cache_search_key_num_max_size: u64,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -53,6 +55,8 @@ impl Config {
             .set_default("server.download_concurrency", 5)?
             .set_default("server.cache_download_token_minute_ttl", 10)?
             .set_default("server.cache_download_token_max_size", 256)?
+            .set_default("server.cache_search_key_num_minute_ttl", 30)?
+            .set_default("server.cache_search_key_num_max_size", 1000000)?
             .set_default("manga.base_url", "")?
             .set_default("manga.preview_size", 10)?
             .set_default("manga.cache_image_minute_ttl", 20)?

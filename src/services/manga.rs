@@ -247,9 +247,68 @@ pub async fn extract_image_urls(aid: &str, url: &str, base_url: &str) -> Result<
         utils::cache::image_cache().insert(aid.to_string(), images.clone()).await;
         info!("aid:{} Image cache miss, insert {} images", aid, images.len());
     }
-    
+
     Ok(images)
 }
+
+pub async fn parse_search(url: &str) -> Result<Vec<MangaInfo>, BotError> {
+    let scheme = get_scheme(url.to_string());
+    let content = utils::http::fetch(url).await?;
+
+    let html = Html::parse_document(&content);
+    let li_sel = Selector::parse(r#"li[class^="cate-"]"#).unwrap();
+    let cover_sel = Selector::parse("a.ImgA").unwrap();
+    let img_sel = Selector::parse("img").unwrap();
+    let title_sel = Selector::parse("span").unwrap();
+    let info_sel = Selector::parse("span.info").unwrap();
+
+    let mut mangas: Vec<MangaInfo> = Vec::new();
+    for li_elem in html.select(&li_sel) {
+        let (id, cover, title) = if let Some(cover_elem) = li_elem.select(&cover_sel).next() {
+            let href = cover_elem.attr("href").unwrap_or("");
+            let cover = if let Some(img_elem) = cover_elem.select(&img_sel).next() {
+                let mut img = img_elem.attr("src").unwrap_or("").to_string();
+                img = fix_image_url(img, scheme.as_str());
+                img
+            } else {
+                String::new()
+            };
+
+            let title = if let Some(title_elem) = cover_elem.select(&title_sel).next() {
+                title_elem.text().collect::<String>().trim().to_string()
+            } else {
+                String::new()
+            };
+
+            (utils::extract_num(href).unwrap_or(0), cover, title)
+        } else {
+            (0, String::new(), String::new())
+        };
+
+        let info = if let Some(info_elem) = li_elem.select(&info_sel).next() {
+            let raw_text = info_elem.text().collect::<Vec<_>>().concat();
+            let info = raw_text.replace(" ", "").replace('\n', "").trim().to_string();
+            info
+        } else {
+            String::new()
+        };
+        let (total, published) = extract_info(info);
+
+        mangas.push(MangaInfo {
+            id,
+            rank: 0,
+            title,
+            cover,
+            author: String::new(),
+            total,
+            fav: 0,
+            published,
+        });
+    }
+
+    Ok(mangas)
+}
+
 
 fn get_scheme(url: String) -> String {
     if url.starts_with("https") {
@@ -271,7 +330,7 @@ fn fix_image_url(url: String, scheme: &str) -> String {
     result
 }
 
-static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)\s*張.*?(\d{4}-\d{2}-\d{2})").unwrap());
+static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)\s*.*?(\d{4}-\d{2}-\d{2})").unwrap());
 fn extract_info(info: String) -> (i32, String) {
     if let Some(caps) = RE.captures(info.as_str()) {
         let total: i32 = caps[1].parse().unwrap_or(0);

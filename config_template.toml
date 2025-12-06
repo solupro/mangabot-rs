@@ -14,6 +14,9 @@ download_path = "/tmp/mangabot/downloads"
 download_concurrency = 5
 cache_download_token_minute_ttl = 10
 cache_download_token_max_size = 256
+cache_search_key_num_minute_ttl = 30
+cache_search_key_num_max_size = 1000000
+
 
 [manga]
 base_url = ""

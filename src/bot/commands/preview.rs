@@ -3,7 +3,7 @@ use crate::error::Result;
 use crate::services;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, InputMedia, InputMediaPhoto};
-use crate::utils::codec::encode_command;
+use crate::utils::codec::{encode_command, encode_command_button};
 
 pub async fn handle(
     bot: &Bot,
@@ -41,11 +41,8 @@ pub async fn handle(
     bot.send_media_group(msg.chat.id, media).await?;
 
     if next < total {
-        let mut buttons = Vec::with_capacity(1);
-        let next_data = encode_command("preview", &[paid, (page.unwrap() + 1).to_string()]).unwrap();
-        buttons.push(InlineKeyboardButton::callback("下一页➡️", next_data));
-
-        bot.send_message(msg.chat.id, "浏览更多图片")
+        let buttons = vec![encode_command_button("下一页➡️", "preview", &[paid, (page.unwrap() + 1).to_string()])];
+        bot.send_message(msg.chat.id, "🌏浏览更多图片")
             .reply_markup(InlineKeyboardMarkup::new([buttons]))
             .await?;
     }

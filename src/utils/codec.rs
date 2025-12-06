@@ -2,6 +2,8 @@ use crate::bot::commands::Command;
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use teloxide::types::InlineKeyboardButton;
+use crate::config::Config;
 // ================
 // 1. 核心数据结构
 // ================
@@ -110,7 +112,9 @@ pub fn encode_command(
     Ok(encoded)
 }
 
-pub fn decode_command(payload: &str) -> Result<Command, Box<dyn std::error::Error + Send + Sync>> {
+pub async fn decode_command(
+    payload: &str,
+) -> Result<Command, Box<dyn std::error::Error + Send + Sync>> {
     // 1. Base64 解码
     let bytes = URL_SAFE_NO_PAD.decode(payload)?;
     let plain = String::from_utf8(bytes)?;
@@ -146,6 +150,28 @@ pub fn decode_command(payload: &str) -> Result<Command, Box<dyn std::error::Erro
             };
             Command::Rank(period, page)
         }
+        "csearch" => {
+            let cache_num = if parts.len() > 1 {
+                parts[1].parse::<u64>().ok()
+            } else {
+                None
+            };
+            let typ = if parts.len() > 2 {
+                Some(parts[2].to_string())
+            } else {
+                None
+            };
+            let page = if parts.len() > 3 {
+                parts[3].parse::<i32>().ok()
+            } else {
+                Some(1)
+            };
+
+            let num = cache_num.expect("缓存编号不能为空");
+            let key = super::cache::search_num_to_key(num).await;
+
+            Command::Search(key, typ, page)
+        }
         "info" => {
             let aid = if parts.len() > 1 {
                 parts[1].to_string()
@@ -167,7 +193,7 @@ pub fn decode_command(payload: &str) -> Result<Command, Box<dyn std::error::Erro
             };
 
             Command::Preview(aid.map(|s| s.to_string()), page)
-        },
+        }
         "zip" => {
             let aid = if parts.len() > 1 {
                 parts[1].to_string()
@@ -175,7 +201,7 @@ pub fn decode_command(payload: &str) -> Result<Command, Box<dyn std::error::Erro
                 String::new()
             };
             Command::Zip(aid)
-        },
+        }
         "cate" => {
             let cate = if parts.len() > 1 {
                 Some(parts[1].to_string())
@@ -193,7 +219,7 @@ pub fn decode_command(payload: &str) -> Result<Command, Box<dyn std::error::Erro
                 Some(1)
             };
             Command::Cate(cate, sub, page)
-        },
+        }
         _ => Command::Start(None),
     };
 
@@ -264,5 +290,34 @@ impl CommandArgsExt for Vec<CommandArg> {
             CommandArg::Bool(v) => Some(*v),
             _ => None,
         })
+    }
+}
+
+pub fn encode_command_button(
+    text: &str,
+    command: &str,
+    args: &[impl Into<CommandArg> + Clone],
+) -> InlineKeyboardButton {
+    let data = encode_command(command, &args).unwrap();
+    InlineKeyboardButton::callback(text, data)
+}
+
+pub fn encode_command_link(
+    bot_name: &str,
+    command: &str,
+    args: &[impl Into<CommandArg> + Clone],
+) -> String {
+    let data = encode_command(command, &args).unwrap();
+    format!("https://t.me/{}?start={}", bot_name, data)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_encode_command() {
+        let cmd = encode_command("search", &["123456789011", "user_nicename", "1"]).unwrap();
+        println!("{:?}", cmd);
     }
 }

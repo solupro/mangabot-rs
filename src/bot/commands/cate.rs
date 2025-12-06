@@ -1,59 +1,59 @@
 use crate::config::Config;
 use crate::error::Result;
 use crate::models::MangaInfo;
+use crate::utils::codec::{encode_command, encode_command_button, encode_command_link};
+use crate::utils::escape_md_v2;
 use std::format;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, ParseMode};
-use crate::utils::codec::encode_command;
-use crate::utils::escape_md_v2;
 
 #[derive(Debug, Clone, Copy)]
 enum Category {
     DOUJINSHI(DoujinshiSub), // 同人志
     TANKOUBON(TankoubonSub), // 单行本
-    SHORT(ShortSub), // 短篇
-    WEBTOON(WebtoonSub), // 韩漫
+    SHORT(ShortSub),         // 短篇
+    WEBTOON(WebtoonSub),     // 韩漫
 }
 
 #[derive(Debug, Clone, Copy)]
 enum DoujinshiSub {
     ALL, // 全部
-    ZH, // 汉化
-    JA, // 日语
-    EN, // 英语
-    CG, // CG
+    ZH,  // 汉化
+    JA,  // 日语
+    EN,  // 英语
+    CG,  // CG
     COSPLAY,
     _3D, // 3D
-    AI, // AI
+    AI,  // AI
 }
 
 #[derive(Debug, Clone, Copy)]
 enum TankoubonSub {
     ALL, // 全部
-    ZH, // 汉化
-    JA, // 日语
-    EN, // 英语
+    ZH,  // 汉化
+    JA,  // 日语
+    EN,  // 英语
 }
 
 #[derive(Debug, Clone, Copy)]
 enum ShortSub {
     ALL, // 全部
-    ZH, // 汉化
-    JA, // 日语
-    EN, // 英语
+    ZH,  // 汉化
+    JA,  // 日语
+    EN,  // 英语
 }
 
 #[derive(Debug, Clone, Copy)]
 enum WebtoonSub {
     ALL, // 全部
-    ZH, // 汉化
+    ZH,  // 汉化
     SRC, // 生肉
 }
 
 impl Category {
     fn from_str(cate: &str, sub: &str) -> Self {
         match cate.to_ascii_lowercase().as_str() {
-            "同人志" | "doujinshi" | "trz"  => match sub.to_ascii_lowercase().as_str() {
+            "同人志" | "doujinshi" | "trz" => match sub.to_ascii_lowercase().as_str() {
                 "全部" | "all" | "qb" => Self::DOUJINSHI(DoujinshiSub::ALL),
                 "汉化" | "zh" | "hh" => Self::DOUJINSHI(DoujinshiSub::ZH),
                 "日语" | "ja" | "ry" => Self::DOUJINSHI(DoujinshiSub::JA),
@@ -103,7 +103,7 @@ impl Category {
                     DoujinshiSub::AI => ("AI", "37"),
                 };
                 (format!("{}-{}", cate_name, sub_name), cate_type)
-            },
+            }
             Self::TANKOUBON(sub) => {
                 let cate_name = "单行本";
                 let (sub_name, cate_type) = match sub {
@@ -113,7 +113,7 @@ impl Category {
                     TankoubonSub::EN => ("英语", "17"),
                 };
                 (format!("{}-{}", cate_name, sub_name), cate_type)
-            },
+            }
             Self::SHORT(sub) => {
                 let cate_name = "短篇";
                 let (sub_name, cate_type) = match sub {
@@ -123,7 +123,7 @@ impl Category {
                     ShortSub::EN => ("英语", "18"),
                 };
                 (format!("{}-{}", cate_name, sub_name), cate_type)
-            },
+            }
             Self::WEBTOON(sub) => {
                 let cate_name = "韩漫";
                 let (sub_name, cate_type) = match sub {
@@ -132,7 +132,7 @@ impl Category {
                     WebtoonSub::SRC => ("生肉", "12"),
                 };
                 (format!("{}-{}", cate_name, sub_name), cate_type)
-            },
+            }
         }
     }
 }
@@ -146,22 +146,15 @@ fn build_cate_url(base_url: &str, cate_num: &str, page: i32) -> String {
     )
 }
 
-
 fn format_manga_item(m: &MangaInfo, bot_name: &str) -> String {
     let title = escape_md_v2(&m.title);
     let cover_url = &m.cover;
     let total = m.total.max(0);
     let date = escape_md_v2(&m.published);
-    let info_act = encode_command("info", &[m.id]).unwrap();
-    let info_url = format!("https://t.me/{}?start={}", bot_name, info_act);
+    let info_url = encode_command_link(bot_name, "info", &[m.id]);
     format!(
-        "* [{}]({}) — 共{}张 — 发布于 {} — id [{}]({}) ",
-        title,
-        cover_url,
-        total,
-        date,
-        m.id,
-        info_url
+        "* [{}]({}) / 📄{} / 📢{} / 👉[{}]({}) ",
+        title, cover_url, total, date, m.id, info_url
     )
 }
 
@@ -185,28 +178,29 @@ pub async fn handle(
 
     let mut lines = Vec::with_capacity(mangas.len().max(1));
     lines.push(format!(
-        "*{}*  第 {} 页",
+        "*{}*   🌏{} 📄{}",
         escape_md_v2(cate_nav.as_str()),
-        page
+        page,
+        mangas.len()
     ));
     for m in mangas.iter().take(20) {
         lines.push(format_manga_item(m, &config.bot.bot_name));
     }
     let text = lines.join("\n");
 
-    let prev_data = if page > 1 {
-        Some(encode_command("cate", &[cate.clone(), sub.clone(), (page - 1).to_string()]).unwrap())
-    } else {
-        None
-    };
-    let next_data = Some(encode_command("cate", &[cate.clone(), sub.clone(), (page + 1).to_string()]).unwrap());
     let mut buttons = Vec::with_capacity(2);
-    if let Some(prev_data) = prev_data {
-        buttons.push(InlineKeyboardButton::callback("⬅️上一页", prev_data));
+    if page > 1 {
+        buttons.push(encode_command_button(
+            "⬅️上一页",
+            "cate",
+            &[cate.clone(), sub.clone(), (page - 1).to_string()],
+        ));
     }
-    if let Some(next_data) = next_data {
-        buttons.push(InlineKeyboardButton::callback("下一页➡️", next_data));
-    }
+    buttons.push(encode_command_button(
+        "下一页➡️",
+        "cate",
+        &[cate.clone(), sub.clone(), (page + 1).to_string()],
+    ));
 
     bot.send_message(msg.chat.id, text)
         .parse_mode(ParseMode::MarkdownV2)
