@@ -110,7 +110,7 @@ async fn download_task(
                 &config.server.web_host
             };
             let download_url = format!("{}/download?token={}", host, token);
-            let msg = format!("[⬇️点击下载{}]({})", utils::escape_md_v2(&title), download_url);
+            let msg = format!("[点击下载⬇️ {}]({})", utils::escape_md_v2(&title), download_url);
 
             bot.send_message(chat_id, msg)
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2)

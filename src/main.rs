@@ -23,6 +23,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     utils::cache::init(&config)?;
     info!("缓存初始化完成");
 
+    {
+        let config_clone = config.clone();
+        if let Err(e) = services::web::start(config_clone) {
+            tracing::error!(error = %e, "web server failed");
+        }
+    }
+
     let bot = Bot::new(&config.bot.telegram_token);
     info!("🚀 Bot启动中...");
     bot::run(bot, config).await?;
