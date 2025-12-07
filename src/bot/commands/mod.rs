@@ -34,7 +34,7 @@ fn parse_start_payload(s: String) -> Result<(Option<String>,), ParseError> {
     }
 }
 
-fn build_images_url(base_url: &str, aid: &str) -> String {
+pub fn build_images_url(base_url: &str, aid: &str) -> String {
     format!(
         "{}/photos-webp-aid-{}.html",
         base_url.trim_end_matches('/'), // 防止双斜杠
@@ -74,7 +74,7 @@ pub enum Command {
     Preview(Option<String>, Option<i32>),
 
     #[command(description = "下载漫画: /zip <aid>")]
-    Zip(String),
+     Zip(i64),
 }
 
 pub mod search;

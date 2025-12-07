@@ -100,73 +100,83 @@ pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
 }
 
 pub async fn parse_detail(id: i64, url: &str) -> Result<MangaDetail, BotError> {
+
+    if let Some(detail) = utils::cache::info_cache().get(&id.to_string()).await {
+        info!("id:{} get manga detail from cache", id);
+        return Ok(detail);
+    }
+
     let scheme = get_scheme(url.to_string());
     let content = utils::http::fetch(url).await?;
 
-    let html = Html::parse_document(&content);
+    let detail = {
+        let html = Html::parse_document(&content);
 
-    let intro_sel = Selector::parse(".Introduct_Sub").unwrap();
-    let cover_sel = Selector::parse("img").unwrap();
-    let author_sel = Selector::parse("a.introName").unwrap();
-    let category_sel = Selector::parse("div.sub_r > p:nth-child(2) > a").unwrap();
-    let total_sel = Selector::parse("span.date").unwrap();
+        let intro_sel = Selector::parse(".Introduct_Sub").unwrap();
+        let cover_sel = Selector::parse("img").unwrap();
+        let author_sel = Selector::parse("a.introName").unwrap();
+        let category_sel = Selector::parse("div.sub_r > p:nth-child(2) > a").unwrap();
+        let total_sel = Selector::parse("span.date").unwrap();
 
-    let desc_sel = Selector::parse(".txtDesc").unwrap();
+        let desc_sel = Selector::parse(".txtDesc").unwrap();
 
-    let (cover, title, author, category, total) = if let Some(intro_elem) = html.select(&intro_sel).next() {
-        let (mut cover, title) = if let Some(cover_elem) = intro_elem.select(&cover_sel).next() {
-            (cover_elem.attr("src").unwrap_or("").to_string(),
-            cover_elem.attr("title").unwrap_or("").to_string())
+        let (cover, title, author, category, total) = if let Some(intro_elem) = html.select(&intro_sel).next() {
+            let (mut cover, title) = if let Some(cover_elem) = intro_elem.select(&cover_sel).next() {
+                (cover_elem.attr("src").unwrap_or("").to_string(),
+                cover_elem.attr("title").unwrap_or("").to_string())
+            } else {
+                (String::new(), String::new())
+            };
+            cover = fix_image_url(cover, scheme.as_str());
+
+            let author = if let Some(author_elem) = intro_elem.select(&author_sel).next() {
+                author_elem.text().collect::<String>().trim().to_string()
+            } else {
+                String::new()
+            };
+
+            let category = if let Some(category_elem) = intro_elem.select(&category_sel).next() {
+                category_elem.text().collect::<String>().trim().to_string()
+            } else {
+                String::new()
+            };
+            let total = if let Some(total_elem) = intro_elem.select(&total_sel).next() {
+                utils::digits_to_i32(total_elem.text().collect::<String>().trim())
+            } else {
+                0
+            };
+
+            (cover, title, author, category, total)
         } else {
-            (String::new(), String::new())
-        };
-        cover = fix_image_url(cover, scheme.as_str());
-
-        let author = if let Some(author_elem) = intro_elem.select(&author_sel).next() {
-            author_elem.text().collect::<String>().trim().to_string()
-        } else {
-            String::new()
+            (String::new(), String::new(), String::new(), String::new(), 0)
         };
 
-        let category = if let Some(category_elem) = intro_elem.select(&category_sel).next() {
-            category_elem.text().collect::<String>().trim().to_string()
-        } else {
-            String::new()
-        };
-        let total = if let Some(total_elem) = intro_elem.select(&total_sel).next() {
-            utils::digits_to_i32(total_elem.text().collect::<String>().trim())
-        } else {
-            0
-        };
+        let desc_elem = html.select(&desc_sel).next().unwrap();
+        let tag_sel = Selector::parse("a.tagshow").unwrap();
 
-        (cover, title, author, category, total)
-    } else {
-        (String::new(), String::new(), String::new(), String::new(), 0)
+        let mut tags: Vec<String> = Vec::new();
+        for tag in desc_elem.select(&tag_sel) {
+            tags.push(tag.text().collect::<String>().trim().to_string());
+        }
+
+        let description = utils::dom::text_without_any(&desc_elem, &[tag_sel])
+            .join("\n")
+            .trim()
+            .to_string();
+
+        MangaDetail {
+            id,
+            title,
+            cover,
+            author,
+            total,
+            category,
+            tags,
+            description,
+        }
     };
-
-    let desc_elem = html.select(&desc_sel).next().unwrap();
-    let tag_sel = Selector::parse("a.tagshow").unwrap();
-
-    let mut tags: Vec<String> = Vec::new();
-    for tag in desc_elem.select(&tag_sel) {
-        tags.push(tag.text().collect::<String>().trim().to_string());
-    }
-
-    let description = utils::dom::text_without_any(&desc_elem, &[tag_sel])
-        .join("\n")
-        .trim()
-        .to_string();
-
-    Ok(MangaDetail {
-        id,
-        title,
-        cover,
-        author,
-        total,
-        category,
-        tags,
-        description,
-    })
+    utils::cache::info_cache().insert(id.to_string(), detail.clone()).await;
+    Ok(detail)
 }
 
 pub async fn parse_cate(url: &str) -> Result<Vec<MangaInfo>, BotError> {

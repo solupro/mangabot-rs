@@ -23,3 +23,5 @@ base_url = ""
 preview_size = 10
 cache_image_minute_ttl = 20
 cache_image_max_size = 256
+cache_info_minute_ttl = 20
+cache_info_max_size = 256

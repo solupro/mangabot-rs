@@ -66,7 +66,7 @@ async fn build_detail_msg(m: MangaDetail, bot_name: &str) -> String {
     )
 }
 
-fn build_info_url(base_url: &str, aid: &str) -> String {
+pub fn build_info_url(base_url: &str, aid: &str) -> String {
     format!(
         "{}/photos-index-aid-{}.html",
         base_url.trim_end_matches('/'), // 防止双斜杠

@@ -36,6 +36,8 @@ pub struct MangaConfig {
     pub preview_size: u32,
     pub cache_image_minute_ttl: u64,
     pub cache_image_max_size: u64,
+    pub cache_info_minute_ttl: u64,
+    pub cache_info_max_size: u64,
 }
 
 impl Config {
@@ -61,6 +63,8 @@ impl Config {
             .set_default("manga.preview_size", 10)?
             .set_default("manga.cache_image_minute_ttl", 20)?
             .set_default("manga.cache_image_max_size", 256)?
+            .set_default("manga.cache_info_minute_ttl", 20)?
+            .set_default("manga.cache_info_max_size", 256)?
             .build()?
             .try_deserialize()
     }

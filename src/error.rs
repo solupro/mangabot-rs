@@ -27,6 +27,10 @@ pub enum BotError {
 
     #[error("请求错误: {0}")]
     RequestStatusError(String),
+
+    #[error("内部错误: {0}")]
+    InternalError(String),
+
 }
 
 // 2024: 更优雅的Result别名

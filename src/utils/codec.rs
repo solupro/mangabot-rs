@@ -3,10 +3,6 @@ use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use teloxide::types::InlineKeyboardButton;
-use crate::config::Config;
-// ================
-// 1. 核心数据结构
-// ================
 
 /// 支持的命令参数类型（可扩展）
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -196,9 +192,9 @@ pub async fn decode_command(
         }
         "zip" => {
             let aid = if parts.len() > 1 {
-                parts[1].to_string()
+                parts[1].parse::<i64>().unwrap_or(0)
             } else {
-                String::new()
+                0
             };
             Command::Zip(aid)
         }

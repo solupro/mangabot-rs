@@ -4,8 +4,10 @@ use moka::future::Cache;
 use std::sync::OnceLock;
 use std::time::Duration;
 use tracing::info;
+use crate::models::MangaDetail;
 
 static IMAGE_CACHE: OnceLock<Cache<String, Vec<String>>> = OnceLock::new();
+static INFO_CACHE: OnceLock<Cache<String, MangaDetail>> = OnceLock::new();
 static DOWNLOAD_TOKEN_CACHE: OnceLock<Cache<String, String>> = OnceLock::new();
 
 static SEARCH_KEY_NUM_CACHE: OnceLock<Cache<String, u64>> = OnceLock::new();
@@ -35,6 +37,11 @@ pub fn init(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
         config.manga.cache_image_max_size,
     );
 
+    let info_cache: Cache<String, MangaDetail> = build_cache(
+        config.manga.cache_info_minute_ttl,
+        config.manga.cache_info_max_size,
+    );
+
     let download_token_client: Cache<String, String> = build_cache(
         config.server.cache_download_token_minute_ttl,
         config.server.cache_download_token_max_size,
@@ -51,6 +58,7 @@ pub fn init(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     );
 
     IMAGE_CACHE.set(image_cache).expect("IMAGE_CACHE init failed");
+    INFO_CACHE.set(info_cache).expect("INFO_CACHE init failed");
     DOWNLOAD_TOKEN_CACHE.set(download_token_client).expect("DOWNLOAD_TOKEN_CACHE init failed");
     SEARCH_KEY_NUM_CACHE.set(search_key_num_cache).expect("SEARCH_KEY_NUM_CACHE init failed");
     SEARCH_NUM_KEY_CACHE.set(search_num_key_cache).expect("SEARCH_NUM_KEY_CACHE init failed");
@@ -62,6 +70,10 @@ pub fn init(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
 
 pub fn image_cache() -> &'static Cache<String, Vec<String>> {
     IMAGE_CACHE.get().expect("IMAGE_CACHE not initialized")
+}
+
+pub fn info_cache() -> &'static Cache<String, MangaDetail> {
+    INFO_CACHE.get().expect("INFO_CACHE not initialized")
 }
 
 pub fn download_token_cache() -> &'static Cache<String, String> {

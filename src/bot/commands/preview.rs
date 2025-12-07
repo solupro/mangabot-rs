@@ -2,8 +2,8 @@ use std::cmp::min;
 use crate::error::Result;
 use crate::services;
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, InputMedia, InputMediaPhoto};
-use crate::utils::codec::{encode_command, encode_command_button};
+use teloxide::types::{InlineKeyboardMarkup, InputFile, InputMedia, InputMediaPhoto};
+use crate::utils::codec::{encode_command_button};
 
 pub async fn handle(
     bot: &Bot,
