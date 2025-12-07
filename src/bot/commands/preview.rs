@@ -32,7 +32,6 @@ pub async fn handle(
                 caption: None,
                 parse_mode: None,
                 caption_entities: None,
-                show_caption_above_media: false,
                 has_spoiler: false,
             })
         })
