@@ -1,12 +1,12 @@
 use crate::config::Config;
 use crate::error::Result;
 use crate::models::MangaInfo;
-use std::format;
-use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 use crate::utils;
 use crate::utils::codec::{encode_command_button, encode_command_link};
 use crate::utils::escape_md_v2;
+use std::format;
+use teloxide::prelude::*;
+use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 #[derive(Debug, Clone, Copy)]
 enum RankType {
@@ -42,7 +42,6 @@ fn build_ranking_url(base_url: &str, rank_type: RankType, page: i32) -> String {
         rank_type.as_str()
     )
 }
-
 
 async fn format_manga_item(m: &MangaInfo, bot_name: &str) -> String {
     let title = escape_md_v2(&m.title);

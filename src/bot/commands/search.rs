@@ -75,9 +75,21 @@ fn type_nav(typ: &str, key: &str) -> String {
 fn build_search_url(base_url: &str, key: &str, typ: &str, page: i32) -> String {
     let search_key = percent_encoding::utf8_percent_encode(key, percent_encoding::NON_ALPHANUMERIC);
     match typ {
-        "u" => format!("{}/q/index.php?q={}&syn=yes&f=user_nicename&s=create_time_DESC&p={page}", base_url.trim_end_matches('/'), search_key),
-        "t" => format!("{}/albums-index-page-{page}-tag-{}.html", base_url.trim_end_matches('/'), search_key),
-        _ => format!("{}/q/index.php?q={}&f=_all&syn=yes&s=create_time_DESC&p={page}", base_url.trim_end_matches('/'), search_key),
+        "u" => format!(
+            "{}/q/index.php?q={}&syn=yes&f=user_nicename&s=create_time_DESC&p={page}",
+            base_url.trim_end_matches('/'),
+            search_key,
+        ),
+        "t" => format!(
+            "{}/albums-index-page-{page}-tag-{}.html",
+            base_url.trim_end_matches('/'),
+            search_key,
+        ),
+        _ => format!(
+            "{}/q/index.php?q={}&f=_all&syn=yes&s=create_time_DESC&p={page}",
+            base_url.trim_end_matches('/'),
+            search_key,
+        ),
     }
 }
 
