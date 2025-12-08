@@ -2,20 +2,13 @@
 use scraper::{ElementRef, Node, Selector};
 
 /// 提取元素文本，排除匹配任意 selector 的子树
-pub fn text_without_any(
-    element: &ElementRef,
-    exclude_selectors: &[Selector],
-) -> Vec<String> {
+pub fn text_without_any(element: &ElementRef, exclude_selectors: &[Selector]) -> Vec<String> {
     let mut texts = Vec::new();
     collect_text(*element, exclude_selectors, &mut texts);
     texts
 }
 
-fn collect_text(
-    elem: ElementRef,
-    exclude_selectors: &[Selector],
-    out: &mut Vec<String>,
-) {
+fn collect_text(elem: ElementRef, exclude_selectors: &[Selector], out: &mut Vec<String>) {
     for node in elem.children() {
         match node.value() {
             Node::Text(text) => {
@@ -27,8 +20,9 @@ fn collect_text(
             Node::Element(_) => {
                 if let Some(child_elem) = ElementRef::wrap(node) {
                     // Check if this child matches any exclusion selector
-                    let should_exclude = exclude_selectors.iter().any(|sel| sel.matches(&child_elem));
-                    
+                    let should_exclude =
+                        exclude_selectors.iter().any(|sel| sel.matches(&child_elem));
+
                     if !should_exclude {
                         collect_text(child_elem, exclude_selectors, out);
                     }
@@ -55,7 +49,7 @@ mod tests {
         // Expect "前文本 后文本", "标签" should be excluded.
         assert_eq!(result, vec!["前文本".to_string(), "后文本".to_string()]);
     }
-    
+
     #[test]
     fn test_exclude_nested() {
         let html = r#"<div>Root <span class="remove">Remove <b class="keep">ButInsideRemove</b></span> Keep</div>"#;

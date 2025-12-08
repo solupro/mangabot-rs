@@ -123,10 +123,7 @@ pub async fn decode_command(
     }
 
     let command = parts[0];
-    let args = parts[1..]
-        .iter()
-        .map(|&s| parse_arg(s))
-        .collect::<Result<Vec<_>, _>>()?;
+    let args = parts[1..].iter().map(|&s| parse_arg(s)).collect::<Result<Vec<_>, _>>()?;
 
     let cmd = match command.to_lowercase().as_str() {
         "rank" => {
@@ -148,21 +145,9 @@ pub async fn decode_command(
             Command::Rank(period, page)
         }
         "csearch" => {
-            let cache_num = if parts.len() > 1 {
-                parts[1].parse::<u64>().ok()
-            } else {
-                None
-            };
-            let typ = if parts.len() > 2 {
-                Some(parts[2].to_string())
-            } else {
-                None
-            };
-            let page = if parts.len() > 3 {
-                parts[3].parse::<i32>().ok()
-            } else {
-                Some(1)
-            };
+            let cache_num = if parts.len() > 1 { parts[1].parse::<u64>().ok() } else { None };
+            let typ = if parts.len() > 2 { Some(parts[2].to_string()) } else { None };
+            let page = if parts.len() > 3 { parts[3].parse::<i32>().ok() } else { Some(1) };
 
             let num = cache_num.expect("缓存编号不能为空");
             let key = super::cache::search_num_to_key(num).await;
@@ -170,51 +155,23 @@ pub async fn decode_command(
             Command::Search(key, typ, page)
         }
         "info" => {
-            let aid = if parts.len() > 1 {
-                parts[1].to_string()
-            } else {
-                String::new()
-            };
+            let aid = if parts.len() > 1 { parts[1].to_string() } else { String::new() };
             Command::Info(aid)
         }
         "preview" => {
-            let aid = if args.len() > 0 {
-                args.get_i64(0)
-            } else {
-                Some(0)
-            };
-            let page = if args.len() > 1 {
-                args.get_i32(1)
-            } else {
-                Some(1)
-            };
+            let aid = if args.len() > 0 { args.get_i64(0) } else { Some(0) };
+            let page = if args.len() > 1 { args.get_i32(1) } else { Some(1) };
 
             Command::Preview(aid.map(|s| s.to_string()), page)
         }
         "zip" => {
-            let aid = if parts.len() > 1 {
-                parts[1].parse::<i64>().unwrap_or(0)
-            } else {
-                0
-            };
+            let aid = if parts.len() > 1 { parts[1].parse::<i64>().unwrap_or(0) } else { 0 };
             Command::Zip(aid)
         }
         "cate" => {
-            let cate = if parts.len() > 1 {
-                Some(parts[1].to_string())
-            } else {
-                None
-            };
-            let sub = if parts.len() > 2 {
-                Some(parts[2].to_string())
-            } else {
-                None
-            };
-            let page = if parts.len() > 3 {
-                parts[3].parse::<i32>().ok()
-            } else {
-                Some(1)
-            };
+            let cate = if parts.len() > 1 { Some(parts[1].to_string()) } else { None };
+            let sub = if parts.len() > 2 { Some(parts[2].to_string()) } else { None };
+            let page = if parts.len() > 3 { parts[3].parse::<i32>().ok() } else { Some(1) };
             Command::Cate(cate, sub, page)
         }
         _ => Command::Start(None),

@@ -14,9 +14,7 @@ pub async fn handle(
     aid: i64,
 ) -> Result<()> {
     if 0 == aid {
-        return Err(BotError::ParseError(
-            "aid is required or parse error".to_string(),
-        ));
+        return Err(BotError::ParseError("aid is required or parse error".to_string()));
     }
     let sid = aid.to_string();
 
@@ -26,10 +24,7 @@ pub async fn handle(
     let images =
         services::manga::extract_image_urls(&sid, &images_url, &config.manga.base_url).await?;
     if images.is_empty() {
-        return Err(BotError::ParseError(format!(
-            "no images found for aid {}",
-            aid
-        )));
+        return Err(BotError::ParseError(format!("no images found for aid {}", aid)));
     }
 
     let reply_msg = bot
@@ -43,7 +38,6 @@ pub async fn handle(
         )
         .parse_mode(teloxide::types::ParseMode::MarkdownV2)
         .await?;
-
 
     let bot_clone = bot.clone();
     let chat_id = msg.chat.id;
@@ -66,7 +60,8 @@ pub async fn handle(
         if let Err(e) = result {
             error!("后台下载任务失败: {:?}", e);
             // 发送错误消息
-            let _ = bot_clone.send_message(chat_id, format!("下载失败: {:?}", e))
+            let _ = bot_clone
+                .send_message(chat_id, format!("下载失败: {:?}", e))
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2)
                 .await;
         }
@@ -113,7 +108,8 @@ async fn download_task(
                 &config.server.web_host
             };
             let download_url = format!("{}/download?token={}", host, token);
-            let msg = format!("[点击下载⬇️ {}]({})", utils::escape_md_v2(&safe_title), download_url);
+            let msg =
+                format!("[点击下载⬇️ {}]({})", utils::escape_md_v2(&safe_title), download_url);
 
             bot.send_message(chat_id, msg)
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2)

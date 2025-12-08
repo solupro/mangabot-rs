@@ -1,6 +1,6 @@
 use config::ConfigError;
-use thiserror::Error;
 use teloxide::RequestError;
+use thiserror::Error;
 
 #[allow(dead_code)]
 #[derive(Error, Debug)]
@@ -40,7 +40,6 @@ pub enum BotError {
 
     #[error("内部错误: {0}")]
     InternalError(String),
-
 }
 
 // 2024: 更优雅的Result别名

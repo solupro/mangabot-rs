@@ -152,10 +152,7 @@ fn format_manga_item(m: &MangaInfo, bot_name: &str) -> String {
     let total = m.total.max(0);
     let date = escape_md_v2(&m.published);
     let info_url = encode_command_link(bot_name, "info", &[m.id]);
-    format!(
-        "* [{}]({}) / 📄{} / 📢{} / 👉[{}]({}) ",
-        title, cover_url, total, date, m.id, info_url
-    )
+    format!("* [{}]({}) / 📄{} / 📢{} / 👉[{}]({}) ", title, cover_url, total, date, m.id, info_url)
 }
 
 pub async fn handle(
@@ -177,12 +174,7 @@ pub async fn handle(
     let mangas = crate::services::manga::parse_cate(&url, &config.manga.base_url).await?;
 
     let mut lines = Vec::with_capacity(mangas.len().max(1));
-    lines.push(format!(
-        "*{}*   🌏{} 📄{}",
-        escape_md_v2(cate_nav.as_str()),
-        page,
-        mangas.len()
-    ));
+    lines.push(format!("*{}*   🌏{} 📄{}", escape_md_v2(cate_nav.as_str()), page, mangas.len()));
     for m in mangas.iter().take(20) {
         lines.push(format_manga_item(m, &config.bot.bot_name));
     }

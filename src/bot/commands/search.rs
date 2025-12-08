@@ -1,13 +1,13 @@
-use crate::error::Result;
-use std::format;
-use teloxide::prelude::*;
-use teloxide::types::InlineKeyboardMarkup;
-use tracing::info;
 use crate::config::Config;
+use crate::error::Result;
 use crate::models::MangaInfo;
 use crate::utils;
 use crate::utils::codec::{encode_command_button, encode_command_link};
 use crate::utils::escape_md_v2;
+use std::format;
+use teloxide::prelude::*;
+use teloxide::types::InlineKeyboardMarkup;
+use tracing::info;
 
 pub async fn handle(
     bot: &Bot,
@@ -87,8 +87,5 @@ fn format_manga_item(m: &MangaInfo, bot_name: &str) -> String {
     let total = m.total.max(0);
     let date = escape_md_v2(&m.published);
     let info_url = encode_command_link(bot_name, "info", &[m.id]);
-    format!(
-        "* [{}]({}) / 📄{} / 📢{} / 👉[{}]({}) ",
-        title, cover_url, total, date, m.id, info_url
-    )
+    format!("* [{}]({}) / 📄{} / 📢{} / 👉[{}]({}) ", title, cover_url, total, date, m.id, info_url)
 }

@@ -15,7 +15,9 @@ fn parse_string_i32(s: String) -> Result<(Option<String>, Option<i32>), ParseErr
     Ok((final_period, final_page))
 }
 
-fn parse_string_string_i32(s: String) -> Result<(Option<String>, Option<String>, Option<i32>), ParseError> {
+fn parse_string_string_i32(
+    s: String,
+) -> Result<(Option<String>, Option<String>, Option<i32>), ParseError> {
     let mut args = s.split_whitespace();
 
     let cate = args.next().map(|s| s.to_string());
@@ -27,11 +29,7 @@ fn parse_string_string_i32(s: String) -> Result<(Option<String>, Option<String>,
 
 fn parse_start_payload(s: String) -> Result<(Option<String>,), ParseError> {
     let s = s.trim();
-    if s.is_empty() {
-        Ok((None,))
-    } else {
-        Ok((Some(s.to_string()),))
-    }
+    if s.is_empty() { Ok((None,)) } else { Ok((Some(s.to_string()),)) }
 }
 
 pub fn build_images_url(base_url: &str, aid: &str) -> String {
@@ -41,7 +39,6 @@ pub fn build_images_url(base_url: &str, aid: &str) -> String {
         aid
     )
 }
-
 
 #[derive(BotCommands, Clone, Debug)]
 #[command(rename_rule = "lowercase", description = "可用命令:")]
@@ -74,13 +71,13 @@ pub enum Command {
     Preview(Option<String>, Option<i32>),
 
     #[command(description = "下载漫画: /zip <aid>")]
-     Zip(i64),
+    Zip(i64),
 }
 
-pub mod search;
-pub mod start;
-pub mod rank;
+pub mod cate;
 pub mod info;
 pub mod preview;
+pub mod rank;
+pub mod search;
+pub mod start;
 pub mod zip;
-pub mod cate;

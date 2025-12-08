@@ -1,8 +1,8 @@
-use once_cell::sync::Lazy;
-use regex::Regex;
 use crate::error::BotError;
 use crate::models::{MangaDetail, MangaInfo};
 use crate::utils;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use scraper::selectable::Selectable;
 use scraper::{Html, Selector};
 use tracing::info;
@@ -40,13 +40,7 @@ pub async fn parse_rank(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, Bot
             let rank = div
                 .select(&rank_sel)
                 .next()
-                .map(|e| {
-                    e.text()
-                        .collect::<String>()
-                        .trim()
-                        .parse::<i32>()
-                        .unwrap_or(0)
-                })
+                .map(|e| e.text().collect::<String>().trim().parse::<i32>().unwrap_or(0))
                 .unwrap_or(0);
 
             let (author, total, fav, published) =
@@ -61,10 +55,7 @@ pub async fn parse_rank(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, Bot
 
                     let mut total = 0;
                     let mut fav = 0;
-                    for t in info_dom
-                        .select(&pd_span_sel)
-                        .map(|s| s.text().collect::<String>())
-                    {
+                    for t in info_dom.select(&pd_span_sel).map(|s| s.text().collect::<String>()) {
                         if t.contains("共") {
                             total = utils::digits_to_i32(&t.trim());
                         } else {
@@ -83,23 +74,13 @@ pub async fn parse_rank(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, Bot
                     (String::new(), 0, 0, String::new())
                 };
 
-            mangas.push(MangaInfo {
-                id,
-                rank,
-                title,
-                cover,
-                author,
-                total,
-                fav,
-                published,
-            });
+            mangas.push(MangaInfo { id, rank, title, cover, author, total, fav, published });
         }
     }
     Ok(mangas)
 }
 
 pub async fn parse_detail(id: i64, url: &str, base_url: &str) -> Result<MangaDetail, BotError> {
-
     if let Some(detail) = utils::cache::info_cache().get(&id.to_string()).await {
         info!("id:{} get manga detail from cache", id);
         return Ok(detail);
@@ -118,10 +99,15 @@ pub async fn parse_detail(id: i64, url: &str, base_url: &str) -> Result<MangaDet
 
         let desc_sel = Selector::parse(".txtDesc").unwrap();
 
-        let (cover, title, author, category, total) = if let Some(intro_elem) = html.select(&intro_sel).next() {
-            let (mut cover, title) = if let Some(cover_elem) = intro_elem.select(&cover_sel).next() {
-                (cover_elem.attr("src").unwrap_or("").to_string(),
-                cover_elem.attr("title").unwrap_or("").to_string())
+        let (cover, title, author, category, total) = if let Some(intro_elem) =
+            html.select(&intro_sel).next()
+        {
+            let (mut cover, title) = if let Some(cover_elem) = intro_elem.select(&cover_sel).next()
+            {
+                (
+                    cover_elem.attr("src").unwrap_or("").to_string(),
+                    cover_elem.attr("title").unwrap_or("").to_string(),
+                )
             } else {
                 (String::new(), String::new())
             };
@@ -159,25 +145,14 @@ pub async fn parse_detail(id: i64, url: &str, base_url: &str) -> Result<MangaDet
                 tags.push(tag.text().collect::<String>().trim().to_string());
             }
 
-            let description = utils::dom::text_without_any(&desc_elem, &[tag_sel])
-                .join("\n")
-                .trim()
-                .to_string();
+            let description =
+                utils::dom::text_without_any(&desc_elem, &[tag_sel]).join("\n").trim().to_string();
             (tags, description)
         } else {
             (Vec::new(), String::new())
         };
 
-        MangaDetail {
-            id,
-            title,
-            cover,
-            author,
-            total,
-            category,
-            tags,
-            description,
-        }
+        MangaDetail { id, title, cover, author, total, category, tags, description }
     };
     utils::cache::info_cache().insert(id.to_string(), detail.clone()).await;
     Ok(detail)
@@ -199,7 +174,11 @@ pub async fn parse_cate(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, Bot
             let href = cover_elem.attr("href").unwrap_or("");
             let cover = if let Some(img_elem) = cover_elem.select(&img_sel).next() {
                 let img = img_elem.attr("src").unwrap_or("").to_string();
-                if img.is_empty() { String::new() } else { utils::http::resolve_url(&img, base_url) }
+                if img.is_empty() {
+                    String::new()
+                } else {
+                    utils::http::resolve_url(&img, base_url)
+                }
             } else {
                 String::new()
             };
@@ -239,8 +218,13 @@ pub async fn parse_cate(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, Bot
     Ok(mangas)
 }
 
-static IMAGE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"url:\s*fast_img_host\s*\+\s*\\"([^\\"]+)\\""#).unwrap());
-pub async fn extract_image_urls(aid: &str, url: &str, base_url: &str) -> Result<Vec<String>, BotError> {
+static IMAGE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"url:\s*fast_img_host\s*\+\s*\\"([^\\"]+)\\""#).unwrap());
+pub async fn extract_image_urls(
+    aid: &str,
+    url: &str,
+    base_url: &str,
+) -> Result<Vec<String>, BotError> {
     if let Some(images) = utils::cache::image_cache().get(aid).await {
         info!("aid:{} Image cache hit", aid);
         return Ok(images);
@@ -279,7 +263,11 @@ pub async fn parse_search(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, B
             let href = cover_elem.attr("href").unwrap_or("");
             let cover = if let Some(img_elem) = cover_elem.select(&img_sel).next() {
                 let img = img_elem.attr("src").unwrap_or("").to_string();
-                if img.is_empty() { String::new() } else { utils::http::resolve_url(&img, base_url) }
+                if img.is_empty() {
+                    String::new()
+                } else {
+                    utils::http::resolve_url(&img, base_url)
+                }
             } else {
                 String::new()
             };
@@ -318,8 +306,6 @@ pub async fn parse_search(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, B
 
     Ok(mangas)
 }
-
-
 // 已统一使用 utils::http::resolve_url
 
 static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)\s*.*?(\d{4}-\d{2}-\d{2})").unwrap());

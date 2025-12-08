@@ -1,8 +1,8 @@
-use actix_files::NamedFile;
-use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
-use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer};
 use crate::config::Config;
 use crate::utils::cache;
+use actix_files::NamedFile;
+use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, middleware::Logger, web};
 use mime_guess::MimeGuess;
 use serde::Deserialize;
 use tokio::fs;
@@ -13,7 +13,10 @@ struct DownloadQuery {
     token: String,
 }
 
-async fn handle_download(req: HttpRequest, query: web::Query<DownloadQuery>) -> actix_web::Result<HttpResponse> {
+async fn handle_download(
+    req: HttpRequest,
+    query: web::Query<DownloadQuery>,
+) -> actix_web::Result<HttpResponse> {
     let token_str = query.token.trim();
     if uuid::Uuid::parse_str(token_str).is_err() {
         error!(token = token_str, "invalid token format");
@@ -78,12 +81,10 @@ pub fn start(config: Config) -> crate::error::Result<()> {
     info!(port = config.server.port, "starting web server");
     std::thread::spawn(move || {
         let sys = actix_web::rt::System::new();
+        let data = web::Data::new(config);
         let _ = sys.block_on(async move {
             let _ = HttpServer::new(move || {
-                App::new()
-                    .wrap(Logger::default())
-                    .app_data(web::Data::new(config.clone()))
-                    .configure(configure)
+                App::new().wrap(Logger::default()).app_data(data.clone()).configure(configure)
             })
             .bind(addr)
             .expect("bind failed")

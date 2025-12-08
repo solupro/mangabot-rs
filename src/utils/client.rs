@@ -1,10 +1,10 @@
-use std::sync::OnceLock;
-use reqwest::{
-    header::{HeaderMap, HeaderValue, REFERER, USER_AGENT},
-    Client, ClientBuilder,
-};
-use std::time::Duration;
 use crate::config::Config;
+use reqwest::{
+    Client, ClientBuilder,
+    header::{HeaderMap, HeaderValue, REFERER, USER_AGENT},
+};
+use std::sync::OnceLock;
+use std::time::Duration;
 
 static HTTP_USER_AGENT: &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1";
 static HTTP_CLIENT: OnceLock<Client> = OnceLock::new();
@@ -18,8 +18,11 @@ pub fn init(config: &Config) -> crate::error::Result<()> {
     let headers = {
         let mut headers = HeaderMap::with_capacity(2); // 预分配容量
         headers.insert(USER_AGENT, HeaderValue::from_static(HTTP_USER_AGENT));
-        headers.insert(REFERER, HeaderValue::from_str(&config.manga.base_url)
-            .expect("config.base_url contains invalid characters for HTTP header"));
+        headers.insert(
+            REFERER,
+            HeaderValue::from_str(&config.manga.base_url)
+                .expect("config.base_url contains invalid characters for HTTP header"),
+        );
         headers
     };
 
@@ -36,7 +39,9 @@ pub fn init(config: &Config) -> crate::error::Result<()> {
     let download_client = build_client(config.server.download_timeout, "DOWNLOAD");
 
     HTTP_CLIENT.set(http_client).expect("HTTP_CLIENT already set (this should be unreachable)");
-    DOWNLOAD_CLIENT.set(download_client).expect("DOWNLOAD_CLIENT already set (this should be unreachable)");
+    DOWNLOAD_CLIENT
+        .set(download_client)
+        .expect("DOWNLOAD_CLIENT already set (this should be unreachable)");
 
     Ok(())
 }

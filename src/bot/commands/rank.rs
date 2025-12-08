@@ -53,7 +53,11 @@ async fn format_manga_item(m: &MangaInfo, bot_name: &str) -> String {
 
     let author = escape_md_v2(&m.author);
     let author_key_num = utils::cache::search_key_to_num(&author).await;
-    let author_link = encode_command_link(bot_name, "csearch", &[author_key_num.to_string(), "u".to_string(), 1.to_string()]);
+    let author_link = encode_command_link(
+        bot_name,
+        "csearch",
+        &[author_key_num.to_string(), "u".to_string(), 1.to_string()],
+    );
 
     format!(
         "*\\#{}* [{}]({}) / 📄{} / ⭐{} / 👤[{}]({}) / 👉[{}]({}) ",
@@ -86,7 +90,7 @@ pub async fn handle(
 
     let mut lines = Vec::with_capacity(mangas.len().max(1));
     lines.push(format!(
-            "*排行榜* \\(`{}`\\) 🌏{} 📄{}",
+        "*排行榜* \\(`{}`\\) 🌏{} 📄{}",
         escape_md_v2(rank_type.as_str()),
         page,
         mangas.len()
@@ -98,9 +102,17 @@ pub async fn handle(
 
     let mut buttons = Vec::with_capacity(2);
     if page > 1 {
-        buttons.push(encode_command_button("⬅️上一页", "rank", &[period.clone(), (page - 1).to_string()]));
+        buttons.push(encode_command_button(
+            "⬅️上一页",
+            "rank",
+            &[period.clone(), (page - 1).to_string()],
+        ));
     }
-    buttons.push(encode_command_button("下一页➡️", "rank", &[period.clone(), (page + 1).to_string()]));
+    buttons.push(encode_command_button(
+        "下一页➡️",
+        "rank",
+        &[period.clone(), (page + 1).to_string()],
+    ));
 
     bot.send_message(msg.chat.id, text)
         .parse_mode(ParseMode::MarkdownV2)

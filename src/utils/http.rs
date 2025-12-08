@@ -1,12 +1,12 @@
+use crate::error::BotError;
+use crate::utils::client;
+use futures::{StreamExt, stream};
+use reqwest::Url;
 use std::path::Path;
 use std::sync::Arc;
-use futures::{stream, StreamExt};
-use reqwest::Url;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tracing::{error, info};
-use crate::error::BotError;
-use crate::utils::client;
 
 fn same_host(url: &str, base_url: &str) -> bool {
     match (Url::parse(url), Url::parse(base_url)) {
@@ -24,25 +24,33 @@ pub async fn fetch(url: &str, base_url: &str) -> Result<String, BotError> {
     if !status.is_success() {
         return Err(BotError::RequestStatusError(format!("{:?}", status)));
     }
-    let text = resp
-        .text()
-        .await?;
+    let text = resp.text().await?;
     Ok(text)
 }
 
 pub fn resolve_url(v: &str, base_url: &str) -> String {
-    if v.starts_with("http") { return v.to_string(); }
-    if v.starts_with("//") { return format!("https:{}", v); }
-    if base_url.is_empty() { return v.to_string(); }
+    if v.starts_with("http") {
+        return v.to_string();
+    }
+    if v.starts_with("//") {
+        return format!("https:{}", v);
+    }
+    if base_url.is_empty() {
+        return v.to_string();
+    }
     if let Ok(base) = Url::parse(base_url) {
-        if let Ok(joined) = base.join(v) { return joined.to_string(); }
+        if let Ok(joined) = base.join(v) {
+            return joined.to_string();
+        }
     }
     v.to_string()
 }
 
-
-async fn download_file(client: &reqwest::Client, url: &str, save_path: &str) -> crate::error::Result<()> {
-
+async fn download_file(
+    client: &reqwest::Client,
+    url: &str,
+    save_path: &str,
+) -> crate::error::Result<()> {
     let mut attempt = 0u32;
     let response = loop {
         attempt += 1;
@@ -55,7 +63,9 @@ async fn download_file(client: &reqwest::Client, url: &str, save_path: &str) -> 
             Err(_) => {}
         }
         if attempt >= 3 {
-            return Err(crate::error::BotError::RequestStatusError("下载失败，超过重试次数".to_string()));
+            return Err(crate::error::BotError::RequestStatusError(
+                "下载失败，超过重试次数".to_string(),
+            ));
         }
         let delay = 100 * attempt; // 毫秒
         tokio::time::sleep(std::time::Duration::from_millis(delay.into())).await;
@@ -91,16 +101,13 @@ pub async fn download_batch(urls: Vec<String>, save_path: &str, max_concurrent: 
         .map(|url| {
             let client = Arc::clone(&client);
             async move {
-                download_file(&client, &url, &save_path).await
-                    .map_err(|e|
-                        {
-                            error!("下载失败 {}: {:?}", url, e);
-                            (url, e)
-                        }
-                    )
+                download_file(&client, &url, &save_path).await.map_err(|e| {
+                    error!("下载失败 {}: {:?}", url, e);
+                    (url, e)
+                })
             }
         })
-        .buffer_unordered(max_concurrent)  // 限制并发
+        .buffer_unordered(max_concurrent) // 限制并发
         .collect()
         .await;
 

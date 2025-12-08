@@ -1,10 +1,10 @@
-use std::sync::atomic::{AtomicU64, Ordering};
 use crate::config::Config;
+use crate::models::MangaDetail;
 use moka::future::Cache;
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 use tracing::info;
-use crate::models::MangaDetail;
 
 static IMAGE_CACHE: OnceLock<Cache<String, Vec<String>>> = OnceLock::new();
 static INFO_CACHE: OnceLock<Cache<String, MangaDetail>> = OnceLock::new();
@@ -15,7 +15,6 @@ static SEARCH_NUM_KEY_CACHE: OnceLock<Cache<u64, String>> = OnceLock::new();
 
 static COUNTER: OnceLock<AtomicU64> = OnceLock::new();
 static MAX_SEARCH_KEY_NUM: OnceLock<u64> = OnceLock::new();
-
 
 pub fn init(config: &Config) -> crate::error::Result<()> {
     fn build_cache<K, V>(ttl_minutes: u64, max_capacity: u64) -> Cache<K, V>
@@ -32,15 +31,11 @@ pub fn init(config: &Config) -> crate::error::Result<()> {
             .build()
     }
 
-    let image_cache: Cache<String, Vec<String>> = build_cache(
-        config.manga.cache_image_minute_ttl,
-        config.manga.cache_image_max_size,
-    );
+    let image_cache: Cache<String, Vec<String>> =
+        build_cache(config.manga.cache_image_minute_ttl, config.manga.cache_image_max_size);
 
-    let info_cache: Cache<String, MangaDetail> = build_cache(
-        config.manga.cache_info_minute_ttl,
-        config.manga.cache_info_max_size,
-    );
+    let info_cache: Cache<String, MangaDetail> =
+        build_cache(config.manga.cache_info_minute_ttl, config.manga.cache_info_max_size);
 
     let download_token_client: Cache<String, String> = build_cache(
         config.server.cache_download_token_minute_ttl,
@@ -63,7 +58,9 @@ pub fn init(config: &Config) -> crate::error::Result<()> {
     SEARCH_KEY_NUM_CACHE.set(search_key_num_cache).expect("SEARCH_KEY_NUM_CACHE init failed");
     SEARCH_NUM_KEY_CACHE.set(search_num_key_cache).expect("SEARCH_NUM_KEY_CACHE init failed");
     COUNTER.set(AtomicU64::new(0)).expect("COUNTER init failed");
-    MAX_SEARCH_KEY_NUM.set(config.server.cache_search_key_num_max_size).expect("MAX_SEARCH_KEY_NUM init failed");
+    MAX_SEARCH_KEY_NUM
+        .set(config.server.cache_search_key_num_max_size)
+        .expect("MAX_SEARCH_KEY_NUM init failed");
 
     Ok(())
 }
@@ -85,19 +82,10 @@ fn increment_cyclic() -> u64 {
     let max = MAX_SEARCH_KEY_NUM.get().expect("MAX_SEARCH_KEY_NUM not initialized");
     loop {
         let current = counter.load(Ordering::Relaxed);
-        let next = if current >= *max {
-            1
-        } else {
-            current + 1
-        };
+        let next = if current >= *max { 1 } else { current + 1 };
 
         // 尝试原子更新，如果期间值被其他线程修改则重试
-        match counter.compare_exchange_weak(
-            current,
-            next,
-            Ordering::SeqCst,
-            Ordering::Relaxed,
-        ) {
+        match counter.compare_exchange_weak(current, next, Ordering::SeqCst, Ordering::Relaxed) {
             Ok(_) => return next,
             Err(_) => continue, // 竞争失败，重新尝试
         }

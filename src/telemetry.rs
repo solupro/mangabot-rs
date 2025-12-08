@@ -1,12 +1,12 @@
-use tracing::{info};
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-use tracing_appender::rolling;
-use tracing_appender::non_blocking;
-use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
 use std::fs;
 use std::io;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+use tracing::info;
+use tracing_appender::non_blocking;
+use tracing_appender::rolling;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
+use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 static GUARD: OnceLock<non_blocking::WorkerGuard> = OnceLock::new();
 
@@ -34,10 +34,7 @@ pub fn init_telemetry(config: &crate::config::Config) -> crate::error::Result<()
 
     let filter = EnvFilter::new(config.server.log_level.clone());
 
-    tracing_subscriber::registry()
-        .with(filter)
-        .with(fmt_layer)
-        .init();
+    tracing_subscriber::registry().with(filter).with(fmt_layer).init();
 
     info!("Telemetry initialized");
     Ok(())

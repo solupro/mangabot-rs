@@ -10,8 +10,12 @@ use teloxide::types::InlineKeyboardMarkup;
 
 pub async fn handle(bot: &Bot, msg: &Message, config: &Config, aid: String) -> Result<()> {
     let info_url = build_info_url(&config.manga.base_url, &aid);
-    let manga_detail =
-        services::manga::parse_detail(aid.parse::<i64>().unwrap(), &info_url, &config.manga.base_url).await?;
+    let manga_detail = services::manga::parse_detail(
+        aid.parse::<i64>().unwrap(),
+        &info_url,
+        &config.manga.base_url,
+    )
+    .await?;
     let detail_msg = build_detail_msg(manga_detail, &config.bot.bot_name).await;
 
     let mut buttons = Vec::with_capacity(2);
