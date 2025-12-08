@@ -4,7 +4,6 @@ use std::format;
 use teloxide::prelude::*;
 use teloxide::types::{InputFile, MessageId};
 use tracing::error;
-use uuid::uuid;
 
 static DOC_LIMIT_SIZE: u64 = 50 * 1024 * 1024;
 
@@ -22,7 +21,7 @@ pub async fn handle(
     let sid = aid.to_string();
 
     let info_url = super::info::build_info_url(&config.manga.base_url, &sid);
-    let info = services::manga::parse_detail(aid, &info_url).await?;
+    let info = services::manga::parse_detail(aid, &info_url, &config.manga.base_url).await?;
     let images_url = crate::bot::commands::build_images_url(&config.manga.base_url, &sid);
     let images =
         services::manga::extract_image_urls(&sid, &images_url, &config.manga.base_url).await?;
@@ -83,21 +82,25 @@ async fn download_task(
     title: String,
     images: Vec<String>,
     config: &crate::config::Config,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let manga_dir = format!("{}/{}", config.server.download_path, title);
+) -> Result<()> {
+    let safe_title = crate::utils::fs::sanitize_filename(&title);
+    let manga_dir = format!("{}/{}", config.server.download_path, safe_title);
     if tokio::fs::metadata(&manga_dir).await.is_err() {
-        tokio::fs::create_dir_all(&manga_dir)
-            .await
-            .map_err(|e| format!("创建目录失败 {}: {}", manga_dir, e))?;
+        tokio::fs::create_dir_all(&manga_dir).await?;
     }
 
     utils::http::download_batch(images, &manga_dir, config.server.download_concurrency).await;
 
-    let zip_path = format!("{}/{}.zip", config.server.download_path, title);
-    utils::zip::compress_dir(&manga_dir, &zip_path)
-        .map_err(|e| format!("压缩失败: {:?}", e))?;
+    let zip_path = format!("{}/{}.zip", config.server.download_path, safe_title);
+    tokio::task::spawn_blocking({
+        let manga_dir = manga_dir.clone();
+        let zip_path = zip_path.clone();
+        move || utils::zip::compress_dir(&manga_dir, &zip_path)
+    })
+    .await
+    .map_err(|e| crate::error::BotError::InternalError(e.to_string()))??;
 
-    if let Ok(zip_meta) = std::fs::metadata(&zip_path) {
+    if let Ok(zip_meta) = tokio::fs::metadata(&zip_path).await {
         if zip_meta.len() < DOC_LIMIT_SIZE {
             bot.send_document(chat_id, InputFile::file(&zip_path)).await?;
         } else {
@@ -110,7 +113,7 @@ async fn download_task(
                 &config.server.web_host
             };
             let download_url = format!("{}/download?token={}", host, token);
-            let msg = format!("[点击下载⬇️ {}]({})", utils::escape_md_v2(&title), download_url);
+            let msg = format!("[点击下载⬇️ {}]({})", utils::escape_md_v2(&safe_title), download_url);
 
             bot.send_message(chat_id, msg)
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2)

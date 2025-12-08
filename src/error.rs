@@ -2,6 +2,7 @@ use config::ConfigError;
 use thiserror::Error;
 use teloxide::RequestError;
 
+#[allow(dead_code)]
 #[derive(Error, Debug)]
 pub enum BotError {
     #[error("Telegram API 错误: {0}")]
@@ -27,6 +28,15 @@ pub enum BotError {
 
     #[error("请求错误: {0}")]
     RequestStatusError(String),
+
+    #[error("IO 错误: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("压缩错误: {0}")]
+    Zip(#[from] zip::result::ZipError),
+
+    #[error("遍历错误: {0}")]
+    Walkdir(#[from] walkdir::Error),
 
     #[error("内部错误: {0}")]
     InternalError(String),

@@ -82,7 +82,7 @@ pub async fn handle(
     let rank_type = RankType::from_str(period.as_str()).unwrap_or(RankType::Day);
     let url = build_ranking_url(&config.manga.base_url, rank_type, page);
 
-    let mangas = crate::services::manga::parse_rank(&url).await?;
+    let mangas = crate::services::manga::parse_rank(&url, &config.manga.base_url).await?;
 
     let mut lines = Vec::with_capacity(mangas.len().max(1));
     lines.push(format!(

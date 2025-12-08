@@ -17,7 +17,7 @@ static COUNTER: OnceLock<AtomicU64> = OnceLock::new();
 static MAX_SEARCH_KEY_NUM: OnceLock<u64> = OnceLock::new();
 
 
-pub fn init(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+pub fn init(config: &Config) -> crate::error::Result<()> {
     fn build_cache<K, V>(ttl_minutes: u64, max_capacity: u64) -> Cache<K, V>
     where
         K: std::hash::Hash + Eq + Send + Sync + std::fmt::Debug + 'static,

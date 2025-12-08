@@ -72,8 +72,9 @@ struct EncodedCommand {
 ///
 /// # 示例
 /// ```
-/// let payload = encode_command("rank", &["day", 123]).unwrap();
-/// // payload = "cmFuazpkYXk6MTIz" (base64 of "rank:day:123")
+/// use mangabot_rs::utils::codec::encode_command;
+/// let payload = encode_command("rank", &["day", "123"]).unwrap();
+/// assert!(!payload.is_empty());
 /// ```
 pub fn encode_command(
     command: &str,
@@ -251,9 +252,11 @@ fn parse_arg(s: &str) -> Result<CommandArg, Box<dyn std::error::Error + Send + S
 
 /// 方便从 Vec<CommandArg> 提取类型安全参数
 pub trait CommandArgsExt {
+    #[allow(dead_code)]
     fn get_string(&self, index: usize) -> Option<&str>;
     fn get_i32(&self, index: usize) -> Option<i32>;
     fn get_i64(&self, index: usize) -> Option<i64>;
+    #[allow(dead_code)]
     fn get_bool(&self, index: usize) -> Option<bool>;
 }
 

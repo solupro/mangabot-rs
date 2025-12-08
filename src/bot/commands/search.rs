@@ -23,9 +23,9 @@ pub async fn handle(
 
     let url = build_search_url(&config.manga.base_url, &key, &typ, page);
     let mangas = if typ == "t" {
-        crate::services::manga::parse_cate(&url).await?
+        crate::services::manga::parse_cate(&url, &config.manga.base_url).await?
     } else {
-        crate::services::manga::parse_search(&url).await?
+        crate::services::manga::parse_search(&url, &config.manga.base_url).await?
     };
     info!("url:{} manga size:{}", url, mangas.len());
 

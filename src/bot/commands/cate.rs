@@ -1,11 +1,11 @@
 use crate::config::Config;
 use crate::error::Result;
 use crate::models::MangaInfo;
-use crate::utils::codec::{encode_command, encode_command_button, encode_command_link};
+use crate::utils::codec::{encode_command_button, encode_command_link};
 use crate::utils::escape_md_v2;
 use std::format;
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, ParseMode};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 #[derive(Debug, Clone, Copy)]
 enum Category {
@@ -174,7 +174,7 @@ pub async fn handle(
     let (cate_nav, cate_num) = cate_type.to_cate_info();
     let url = build_cate_url(&config.manga.base_url, cate_num, page);
 
-    let mangas = crate::services::manga::parse_cate(&url).await?;
+    let mangas = crate::services::manga::parse_cate(&url, &config.manga.base_url).await?;
 
     let mut lines = Vec::with_capacity(mangas.len().max(1));
     lines.push(format!(

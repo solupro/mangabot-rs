@@ -23,7 +23,7 @@ async fn dispatch_command(
     };
 
     let result = match cmd {
-        Command::Start(payload) => start::handle(&bot, &msg).await,
+        Command::Start(_payload) => start::handle(&bot, &msg).await,
         Command::Search(key, typ, page) => search::handle(&bot, &msg, &config, key, typ, page).await,
         Command::Rank(period, page) => rank::handle(&bot, &msg, &config, period, page).await,
         Command::Info(aid) => info::handle(&bot, &msg, &config, aid).await,

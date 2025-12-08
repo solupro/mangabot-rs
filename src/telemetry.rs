@@ -4,7 +4,6 @@ use tracing_appender::rolling;
 use tracing_appender::non_blocking;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
-use chrono::{Utc, NaiveDate};
 use std::fs;
 use std::io;
 use tracing_subscriber::fmt::writer::MakeWriterExt;
@@ -18,7 +17,7 @@ fn split_path(path: &str) -> (PathBuf, String) {
     (dir, file)
 }
 
-pub fn init_telemetry(config: &crate::config::Config) -> Result<(), Box<dyn std::error::Error>> {
+pub fn init_telemetry(config: &crate::config::Config) -> crate::error::Result<()> {
     let (dir, file) = split_path(&config.server.log_path);
     fs::create_dir_all(&dir)?;
 

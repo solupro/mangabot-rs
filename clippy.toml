@@ -1,0 +1,5 @@
+warn = [
+  "unwrap_used",
+  "expect_used",
+  "panic",
+]

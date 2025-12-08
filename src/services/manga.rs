@@ -7,9 +7,8 @@ use scraper::selectable::Selectable;
 use scraper::{Html, Selector};
 use tracing::info;
 
-pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
-    let scheme = get_scheme(url.to_string());
-    let content = utils::http::fetch(url).await?;
+pub async fn parse_rank(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, BotError> {
+    let content = utils::http::fetch(url, base_url).await?;
 
     let html = Html::parse_document(&content);
     let item_box_sel = Selector::parse(".itemBox").unwrap();
@@ -34,8 +33,8 @@ pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
                 .and_then(|img| img.attr("src"))
                 .unwrap_or("")
                 .to_string();
-            if !cover.starts_with("http") && !cover.is_empty() {
-                cover = format!("{}{}", scheme, cover);
+            if !cover.is_empty() {
+                cover = utils::http::resolve_url(&cover, base_url);
             }
 
             let rank = div
@@ -99,15 +98,14 @@ pub async fn parse_rank(url: &str) -> Result<Vec<MangaInfo>, BotError> {
     Ok(mangas)
 }
 
-pub async fn parse_detail(id: i64, url: &str) -> Result<MangaDetail, BotError> {
+pub async fn parse_detail(id: i64, url: &str, base_url: &str) -> Result<MangaDetail, BotError> {
 
     if let Some(detail) = utils::cache::info_cache().get(&id.to_string()).await {
         info!("id:{} get manga detail from cache", id);
         return Ok(detail);
     }
 
-    let scheme = get_scheme(url.to_string());
-    let content = utils::http::fetch(url).await?;
+    let content = utils::http::fetch(url, base_url).await?;
 
     let detail = {
         let html = Html::parse_document(&content);
@@ -127,7 +125,9 @@ pub async fn parse_detail(id: i64, url: &str) -> Result<MangaDetail, BotError> {
             } else {
                 (String::new(), String::new())
             };
-            cover = fix_image_url(cover, scheme.as_str());
+            if !cover.is_empty() {
+                cover = utils::http::resolve_url(&cover, base_url);
+            }
 
             let author = if let Some(author_elem) = intro_elem.select(&author_sel).next() {
                 author_elem.text().collect::<String>().trim().to_string()
@@ -151,18 +151,22 @@ pub async fn parse_detail(id: i64, url: &str) -> Result<MangaDetail, BotError> {
             (String::new(), String::new(), String::new(), String::new(), 0)
         };
 
-        let desc_elem = html.select(&desc_sel).next().unwrap();
-        let tag_sel = Selector::parse("a.tagshow").unwrap();
+        let (tags, description) = if let Some(desc_elem) = html.select(&desc_sel).next() {
+            let tag_sel = Selector::parse("a.tagshow").unwrap();
 
-        let mut tags: Vec<String> = Vec::new();
-        for tag in desc_elem.select(&tag_sel) {
-            tags.push(tag.text().collect::<String>().trim().to_string());
-        }
+            let mut tags: Vec<String> = Vec::new();
+            for tag in desc_elem.select(&tag_sel) {
+                tags.push(tag.text().collect::<String>().trim().to_string());
+            }
 
-        let description = utils::dom::text_without_any(&desc_elem, &[tag_sel])
-            .join("\n")
-            .trim()
-            .to_string();
+            let description = utils::dom::text_without_any(&desc_elem, &[tag_sel])
+                .join("\n")
+                .trim()
+                .to_string();
+            (tags, description)
+        } else {
+            (Vec::new(), String::new())
+        };
 
         MangaDetail {
             id,
@@ -179,9 +183,8 @@ pub async fn parse_detail(id: i64, url: &str) -> Result<MangaDetail, BotError> {
     Ok(detail)
 }
 
-pub async fn parse_cate(url: &str) -> Result<Vec<MangaInfo>, BotError> {
-    let scheme = get_scheme(url.to_string());
-    let content = utils::http::fetch(url).await?;
+pub async fn parse_cate(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, BotError> {
+    let content = utils::http::fetch(url, base_url).await?;
 
     let html = Html::parse_document(&content);
     let li_sel = Selector::parse(r#"li[class^="cate-"]"#).unwrap();
@@ -195,9 +198,8 @@ pub async fn parse_cate(url: &str) -> Result<Vec<MangaInfo>, BotError> {
         let (id, cover) = if let Some(cover_elem) = li_elem.select(&cover_sel).next() {
             let href = cover_elem.attr("href").unwrap_or("");
             let cover = if let Some(img_elem) = cover_elem.select(&img_sel).next() {
-                let mut img = img_elem.attr("src").unwrap_or("").to_string();
-                img = fix_image_url(img, scheme.as_str());
-                img
+                let img = img_elem.attr("src").unwrap_or("").to_string();
+                if img.is_empty() { String::new() } else { utils::http::resolve_url(&img, base_url) }
             } else {
                 String::new()
             };
@@ -244,7 +246,7 @@ pub async fn extract_image_urls(aid: &str, url: &str, base_url: &str) -> Result<
         return Ok(images);
     }
 
-    let content = utils::http::fetch(url).await?;
+    let content = utils::http::fetch(url, base_url).await?;
 
     let mut images: Vec<String> = Vec::new();
     for cap in IMAGE_RE.captures_iter(&content) {
@@ -261,9 +263,8 @@ pub async fn extract_image_urls(aid: &str, url: &str, base_url: &str) -> Result<
     Ok(images)
 }
 
-pub async fn parse_search(url: &str) -> Result<Vec<MangaInfo>, BotError> {
-    let scheme = get_scheme(url.to_string());
-    let content = utils::http::fetch(url).await?;
+pub async fn parse_search(url: &str, base_url: &str) -> Result<Vec<MangaInfo>, BotError> {
+    let content = utils::http::fetch(url, base_url).await?;
 
     let html = Html::parse_document(&content);
     let li_sel = Selector::parse(r#"li[class^="cate-"]"#).unwrap();
@@ -277,9 +278,8 @@ pub async fn parse_search(url: &str) -> Result<Vec<MangaInfo>, BotError> {
         let (id, cover, title) = if let Some(cover_elem) = li_elem.select(&cover_sel).next() {
             let href = cover_elem.attr("href").unwrap_or("");
             let cover = if let Some(img_elem) = cover_elem.select(&img_sel).next() {
-                let mut img = img_elem.attr("src").unwrap_or("").to_string();
-                img = fix_image_url(img, scheme.as_str());
-                img
+                let img = img_elem.attr("src").unwrap_or("").to_string();
+                if img.is_empty() { String::new() } else { utils::http::resolve_url(&img, base_url) }
             } else {
                 String::new()
             };
@@ -320,25 +320,7 @@ pub async fn parse_search(url: &str) -> Result<Vec<MangaInfo>, BotError> {
 }
 
 
-fn get_scheme(url: String) -> String {
-    if url.starts_with("https") {
-        "https:".to_string()
-    } else {
-        "http:".to_string()
-    }
-}
-
-fn fix_image_url(url: String, scheme: &str) -> String {
-    let mut result = url.clone();
-    if !result.starts_with("http") {
-        if result.starts_with("////") {
-            result = result.strip_prefix("//").unwrap_or(&result).to_string();
-        }
-        return format!("{}{}", scheme, result);
-    }
-
-    result
-}
+// 已统一使用 utils::http::resolve_url
 
 static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d+)\s*.*?(\d{4}-\d{2}-\d{2})").unwrap());
 fn extract_info(info: String) -> (i32, String) {

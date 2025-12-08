@@ -7,6 +7,7 @@ pub mod codec;
 pub mod dom;
 pub mod cache;
 pub mod zip;
+pub mod fs;
 
 static NUM_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"-(\d+)").unwrap());
 

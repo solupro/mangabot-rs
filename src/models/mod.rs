@@ -12,6 +12,7 @@ pub struct MangaInfo {
 
 #[derive(Debug, Clone)]
 pub struct MangaDetail {
+    #[allow(dead_code)]
     pub id: i64,
     pub title: String,
     pub cover: String,

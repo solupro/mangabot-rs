@@ -8,7 +8,17 @@ use tracing::{error, info};
 use crate::error::BotError;
 use crate::utils::client;
 
-pub async fn fetch(url: &str) -> Result<String, BotError> {
+fn same_host(url: &str, base_url: &str) -> bool {
+    match (Url::parse(url), Url::parse(base_url)) {
+        (Ok(u), Ok(b)) => u.host_str() == b.host_str(),
+        _ => false,
+    }
+}
+
+pub async fn fetch(url: &str, base_url: &str) -> Result<String, BotError> {
+    if !base_url.is_empty() && !same_host(url, base_url) {
+        return Err(BotError::InternalError("SSRF blocked: host not allowed".to_string()));
+    }
     let resp = client::http().get(url).send().await?;
     let status = resp.status();
     if !status.is_success() {
@@ -16,8 +26,7 @@ pub async fn fetch(url: &str) -> Result<String, BotError> {
     }
     let text = resp
         .text()
-        .await
-        .map_err(|e| BotError::RequestError(e.into()))?;
+        .await?;
     Ok(text)
 }
 
@@ -32,16 +41,29 @@ pub fn resolve_url(v: &str, base_url: &str) -> String {
 }
 
 
-pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
-async fn download_file(client: &reqwest::Client, url: &str, save_path: &str) -> Result<(), BoxError> {
+async fn download_file(client: &reqwest::Client, url: &str, save_path: &str) -> crate::error::Result<()> {
 
-    let response = client.get(url).send().await?;
-    if !response.status().is_success() {
-        return Err(format!("下载失败，状态码: {}", response.status()).into());
-    }
+    let mut attempt = 0u32;
+    let response = loop {
+        attempt += 1;
+        match client.get(url).send().await {
+            Ok(resp) => {
+                if resp.status().is_success() {
+                    break resp;
+                }
+            }
+            Err(_) => {}
+        }
+        if attempt >= 3 {
+            return Err(crate::error::BotError::RequestStatusError("下载失败，超过重试次数".to_string()));
+        }
+        let delay = 100 * attempt; // 毫秒
+        tokio::time::sleep(std::time::Duration::from_millis(delay.into())).await;
+    };
 
     // url 解析文件名
-    let filename = url.split('/').last().unwrap_or(url);
+    let raw = url.split('/').last().unwrap_or(url);
+    let filename = crate::utils::fs::sanitize_filename(raw);
     let file_path = format!("{}/{}", save_path, filename);
 
     // 创建目标文件

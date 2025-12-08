@@ -1,4 +1,4 @@
-use std::sync::{Arc, OnceLock};
+use std::sync::OnceLock;
 use reqwest::{
     header::{HeaderMap, HeaderValue, REFERER, USER_AGENT},
     Client, ClientBuilder,
@@ -10,7 +10,7 @@ static HTTP_USER_AGENT: &str = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac
 static HTTP_CLIENT: OnceLock<Client> = OnceLock::new();
 static DOWNLOAD_CLIENT: OnceLock<Client> = OnceLock::new();
 
-pub fn init(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+pub fn init(config: &Config) -> crate::error::Result<()> {
     if HTTP_CLIENT.get().is_some() || DOWNLOAD_CLIENT.get().is_some() {
         panic!("`init()` called more than once! HTTP clients are already initialized.");
     }

@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 use teloxide::Bot;
 use crate::config::Config;
 use tracing::info;
@@ -11,7 +12,7 @@ mod services;
 mod utils;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> crate::error::Result<()> {
 
     let config = Config::load().expect("配置加载失败");
     telemetry::init_telemetry(&config)?;

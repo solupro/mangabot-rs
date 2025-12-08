@@ -28,6 +28,18 @@ async fn handle_download(req: HttpRequest, query: web::Query<DownloadQuery>) -> 
     }
     let path = path_opt.unwrap();
 
+    let base_path_string = req
+        .app_data::<web::Data<Config>>()
+        .map(|d| d.server.download_path.clone())
+        .unwrap_or_else(|| "/tmp/mangabot/downloads".to_string());
+    let base = std::path::Path::new(&base_path_string);
+
+    let target = std::path::Path::new(&path);
+    if !crate::utils::fs::canonicalize_within(base, target) {
+        error!(path = %path, "file path out of download directory");
+        return Ok(HttpResponse::NotFound().finish());
+    }
+
     if fs::metadata(&path).await.is_err() {
         error!(path = %path, "file not found");
         return Ok(HttpResponse::NotFound().finish());
@@ -44,11 +56,12 @@ async fn handle_download(req: HttpRequest, query: web::Query<DownloadQuery>) -> 
     let filename = std::path::Path::new(&path)
         .file_name()
         .and_then(|s| s.to_str())
-        .unwrap_or("download");
+        .map(|s| crate::utils::fs::sanitize_filename(s))
+        .unwrap_or("download".to_string());
 
     let cd = ContentDisposition {
         disposition: DispositionType::Attachment,
-        parameters: vec![DispositionParam::Filename(String::from(filename))],
+        parameters: vec![DispositionParam::Filename(filename)],
     };
 
     let mime = MimeGuess::from_path(&path).first_or_octet_stream();
@@ -60,7 +73,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.route("/download", web::get().to(handle_download));
 }
 
-pub fn start(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+pub fn start(config: Config) -> crate::error::Result<()> {
     let addr = ("0.0.0.0", config.server.port);
     info!(port = config.server.port, "starting web server");
     std::thread::spawn(move || {
