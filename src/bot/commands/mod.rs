@@ -72,6 +72,21 @@ pub enum Command {
 
     #[command(description = "下载漫画: /zip <aid>")]
     Zip(i64),
+
+    #[command(description = "显示排行榜菜单: /menu_rank")]
+    Menu_Rank,
+
+    #[command(description = "显示同人志分类菜单: /menu_cate_trz")]
+    Menu_Cate_TRZ,
+
+    #[command(description = "显示单行本分类菜单: /menu_cate_dxb")]
+    Menu_Cate_DXB,
+
+    #[command(description = "显示短篇分类菜单: /menu_cate_dp")]
+    Menu_Cate_DP,
+
+    #[command(description = "显示韩漫分类菜单: /menu_cate_hm")]
+    Menu_Cate_HM,
 }
 
 pub mod cate;
@@ -81,3 +96,7 @@ pub mod rank;
 pub mod search;
 pub mod start;
 pub mod zip;
+
+pub mod menu;
+
+

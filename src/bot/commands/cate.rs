@@ -4,19 +4,20 @@ use crate::models::MangaInfo;
 use crate::utils::codec::{encode_command_button, encode_command_link};
 use crate::utils::escape_md_v2;
 use std::format;
+use strum_macros::EnumIter;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 #[derive(Debug, Clone, Copy)]
-enum Category {
+pub enum Category {
     DOUJINSHI(DoujinshiSub), // 同人志
     TANKOUBON(TankoubonSub), // 单行本
     SHORT(ShortSub),         // 短篇
     WEBTOON(WebtoonSub),     // 韩漫
 }
 
-#[derive(Debug, Clone, Copy)]
-enum DoujinshiSub {
+#[derive(Debug, Clone, Copy, EnumIter)]
+pub enum DoujinshiSub {
     ALL, // 全部
     ZH,  // 汉化
     JA,  // 日语
@@ -27,28 +28,110 @@ enum DoujinshiSub {
     AI,  // AI
 }
 
-#[derive(Debug, Clone, Copy)]
-enum TankoubonSub {
+#[derive(Debug, Clone, Copy, EnumIter)]
+pub enum TankoubonSub {
     ALL, // 全部
     ZH,  // 汉化
     JA,  // 日语
     EN,  // 英语
 }
 
-#[derive(Debug, Clone, Copy)]
-enum ShortSub {
+#[derive(Debug, Clone, Copy, EnumIter)]
+pub enum ShortSub {
     ALL, // 全部
     ZH,  // 汉化
     JA,  // 日语
     EN,  // 英语
 }
 
-#[derive(Debug, Clone, Copy)]
-enum WebtoonSub {
+#[derive(Debug, Clone, Copy, EnumIter)]
+pub enum WebtoonSub {
     ALL, // 全部
     ZH,  // 汉化
     SRC, // 生肉
 }
+
+impl DoujinshiSub {
+    pub fn as_name(&self) -> &'static str {
+        match self {
+            Self::ALL => "全部",
+            Self::ZH => "汉化",
+            Self::JA => "日语",
+            Self::EN => "英语",
+            Self::CG => "CG",
+            Self::COSPLAY => "COSPLAY",
+            Self::_3D => "3D",
+            Self::AI => "AI",
+        }
+    }
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::ALL => "all",
+            Self::ZH => "zh",
+            Self::JA => "ja",
+            Self::EN => "en",
+            Self::CG => "cg",
+            Self::COSPLAY => "cos",
+            Self::_3D => "3d",
+            Self::AI => "ai",
+        }
+    }
+}
+
+impl TankoubonSub {
+    pub fn as_name(&self) -> &'static str {
+        match self {
+            Self::ALL => "全部",
+            Self::ZH => "汉化",
+            Self::JA => "日语",
+            Self::EN => "英语",
+        }
+    }
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::ALL => "all",
+            Self::ZH => "zh",
+            Self::JA => "ja",
+            Self::EN => "en",
+        }
+    }
+}
+impl ShortSub {
+    pub fn as_name(&self) -> &'static str {
+        match self {
+            Self::ALL => "全部",
+            Self::ZH => "汉化",
+            Self::JA => "日语",
+            Self::EN => "英语",
+        }
+    }
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::ALL => "all",
+            Self::ZH => "zh",
+            Self::JA => "ja",
+            Self::EN => "en",
+        }
+    }
+}
+impl WebtoonSub {
+    pub fn as_name(&self) -> &'static str {
+        match self {
+            Self::ALL => "全部",
+            Self::ZH => "汉化",
+            Self::SRC => "生肉",
+        }
+    }
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::ALL => "all",
+            Self::ZH => "zh",
+            Self::SRC => "src",
+        }
+    }
+}
+
+
 
 impl Category {
     fn from_str(cate: &str, sub: &str) -> Self {

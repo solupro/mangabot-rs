@@ -37,6 +37,8 @@ uuid = { version = "1.19.0", features = ["v4"] }
 actix-web = { version = "4" }
 actix-files = { version = "0.6" }
 mime_guess = "2.0"
+strum = "0.26"
+strum_macros = "0.26"
 
 [dev-dependencies]
 # 测试框架

@@ -5,18 +5,26 @@ use crate::utils;
 use crate::utils::codec::{encode_command_button, encode_command_link};
 use crate::utils::escape_md_v2;
 use std::format;
+use strum_macros::EnumIter;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
-#[derive(Debug, Clone, Copy)]
-enum RankType {
+#[derive(Debug, Clone, Copy, EnumIter)]
+pub enum RankType {
     Day,
     Week,
     Month,
 }
 
 impl RankType {
-    fn as_str(&self) -> &'static str {
+    pub fn as_name(&self) -> &'static str {
+        match self {
+            Self::Day => "日榜",
+            Self::Week => "周榜",
+            Self::Month => "月榜",
+        }
+    }
+    pub fn as_str(&self) -> &'static str {
         match self {
             Self::Day => "day",
             Self::Week => "week",

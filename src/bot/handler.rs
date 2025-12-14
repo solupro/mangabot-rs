@@ -1,9 +1,10 @@
-use crate::bot::commands::{Command, cate, info, preview, rank, search, start, zip};
+use crate::bot::commands::{Command, cate, info, preview, rank, search, start, zip, menu};
 use crate::error::Result;
 use crate::utils;
 use std::sync::Arc;
 use teloxide::prelude::*;
 use tracing::{debug, error, info, warn};
+use crate::bot::commands::menu::MenuType;
 
 /// 统一的命令分发核心，返回是否需要删除原消息
 async fn dispatch_command(
@@ -31,6 +32,11 @@ async fn dispatch_command(
         Command::Preview(aid, page) => preview::handle(&bot, &msg, &config, aid, page).await,
         Command::Zip(aid) => zip::handle(&bot, &msg, &config, aid).await,
         Command::Cate(cate, sub, page) => cate::handle(&bot, &msg, &config, cate, sub, page).await,
+        Command::Menu_Rank => menu::handle(&bot, &msg, MenuType::Rank).await,
+        Command::Menu_Cate_TRZ => menu::handle(&bot, &msg, MenuType::CateTrz).await,
+        Command::Menu_Cate_DXB => menu::handle(&bot, &msg, MenuType::CateDxb).await,
+        Command::Menu_Cate_DP => menu::handle(&bot, &msg, MenuType::CateDp).await,
+        Command::Menu_Cate_HM => menu::handle(&bot, &msg, MenuType::CateHm).await,
     };
 
     if let Err(ref e) = result {
