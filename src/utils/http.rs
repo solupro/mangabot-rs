@@ -32,6 +32,11 @@ pub fn resolve_url(v: &str, base_url: &str) -> String {
     if v.starts_with("http") {
         return v.to_string();
     }
+
+    if v.starts_with("////") {
+        return format!("https:{}", v.strip_prefix("//").unwrap_or(v));
+    }
+
     if v.starts_with("//") {
         return format!("https:{}", v);
     }
