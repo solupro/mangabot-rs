@@ -77,8 +77,7 @@ async fn download_file(
     };
 
     // url 解析文件名
-    let raw = url.split('/').last().unwrap_or(url);
-    let filename = crate::utils::fs::sanitize_filename(raw);
+    let filename = url.split('/').last().unwrap_or(url);
     let file_path = format!("{}/{}", save_path, filename);
 
     // 创建目标文件

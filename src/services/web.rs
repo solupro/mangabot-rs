@@ -59,12 +59,11 @@ async fn handle_download(
     let filename = std::path::Path::new(&path)
         .file_name()
         .and_then(|s| s.to_str())
-        .map(|s| crate::utils::fs::sanitize_filename(s))
-        .unwrap_or("download".to_string());
+        .unwrap_or("download");
 
     let cd = ContentDisposition {
         disposition: DispositionType::Attachment,
-        parameters: vec![DispositionParam::Filename(filename)],
+        parameters: vec![DispositionParam::Filename(filename.to_string())],
     };
 
     let mime = MimeGuess::from_path(&path).first_or_octet_stream();

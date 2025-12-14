@@ -78,15 +78,14 @@ async fn download_task(
     images: Vec<String>,
     config: &crate::config::Config,
 ) -> Result<()> {
-    let safe_title = crate::utils::fs::sanitize_filename(&title);
-    let manga_dir = format!("{}/{}", config.server.download_path, safe_title);
+    let manga_dir = format!("{}/{}", config.server.download_path, title);
     if tokio::fs::metadata(&manga_dir).await.is_err() {
         tokio::fs::create_dir_all(&manga_dir).await?;
     }
 
     utils::http::download_batch(images, &manga_dir, config.server.download_concurrency).await;
 
-    let zip_path = format!("{}/{}.zip", config.server.download_path, safe_title);
+    let zip_path = format!("{}/{}.zip", config.server.download_path, title);
     tokio::task::spawn_blocking({
         let manga_dir = manga_dir.clone();
         let zip_path = zip_path.clone();
@@ -109,7 +108,7 @@ async fn download_task(
             };
             let download_url = format!("{}/download?token={}", host, token);
             let msg =
-                format!("[点击下载⬇️ {}]({})", utils::escape_md_v2(&safe_title), download_url);
+                format!("[点击下载⬇️ {}]({})", utils::escape_md_v2(&title), download_url);
 
             bot.send_message(chat_id, msg)
                 .parse_mode(teloxide::types::ParseMode::MarkdownV2)

@@ -46,10 +46,6 @@ tokio-test = "0.4"
 mockall = "0.13"           # 模拟对象
 tempfile = "3"
 
-[profile.dev]
-opt-level = 1
-incremental = true
-
 [profile.release]
 lto = "thin"
 codegen-units = 1
